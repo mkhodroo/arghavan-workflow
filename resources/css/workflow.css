@@ -1,0 +1,334 @@
+/**
+ * ارغوان ورکفلو - استایل مشترک صفحات پکیج
+ *
+ * همه سلکتورها با پیشوند aw شروع می‌شوند تا با layout اصلی پروژه
+ * (behin-layouts) تداخلی نداشته باشند؛ هیچ استایل سراسری (body/html)
+ * اینجا نیست.
+ */
+
+/* ------------------------------------------------------------------ */
+/* هدر                                                                  */
+/* ------------------------------------------------------------------ */
+
+.aw-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background: linear-gradient(90deg, #5b21b6, #7c3aed);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .15);
+}
+
+.aw-brand {
+    color: #fff;
+    text-decoration: none;
+    font-size: 17px;
+    font-weight: bold;
+}
+
+.aw-nav a {
+    color: #ede9fe;
+    text-decoration: none;
+    margin-right: 18px;
+    font-size: 13.5px;
+}
+
+.aw-nav a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------ */
+/* بدنه صفحه                                                            */
+/* ------------------------------------------------------------------ */
+
+.aw-container {
+    padding: 20px 24px;
+    max-width: 1500px;
+    margin: 0 auto;
+}
+
+.aw-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+
+.aw-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.aw-card-header h2 {
+    margin: 0;
+    font-size: 17px;
+}
+
+.aw-alert {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    font-size: 13.5px;
+}
+
+.aw-muted {
+    color: #6b7280;
+    font-size: 13.5px;
+    line-height: 1.9;
+}
+
+.aw-muted code {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 1px 5px;
+    direction: ltr;
+    display: inline-block;
+}
+
+/* ------------------------------------------------------------------ */
+/* جدول                                                                 */
+/* ------------------------------------------------------------------ */
+
+.aw-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.aw-table th,
+.aw-table td {
+    text-align: right;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13.5px;
+}
+
+.aw-table th {
+    background: #f9fafb;
+    color: #374151;
+}
+
+.aw-table tbody tr:hover td {
+    background: #faf5ff;
+}
+
+.aw-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.aw-actions form {
+    display: inline;
+    margin: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* دکمه‌ها و فرم‌ها                                                      */
+/* ------------------------------------------------------------------ */
+
+.aw-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 14px;
+    background: #7c3aed;
+    color: #fff;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    text-decoration: none;
+    line-height: 1.4;
+}
+
+.aw-btn:hover {
+    background: #6d28d9;
+}
+
+.aw-btn.secondary {
+    background: #6b7280;
+}
+
+.aw-btn.secondary:hover {
+    background: #4b5563;
+}
+
+.aw-btn.danger {
+    background: #dc2626;
+}
+
+.aw-btn.danger:hover {
+    background: #b91c1c;
+}
+
+.aw-btn.ghost {
+    background: transparent;
+    color: #4b5563;
+    border-color: #d1d5db;
+}
+
+.aw-btn.ghost:hover {
+    background: #f5f3ff;
+    border-color: #c4b5fd;
+    color: #5b21b6;
+}
+
+.aw-btn.small {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+.aw-input {
+    padding: 7px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 13px;
+    min-width: 220px;
+    background: #fff;
+}
+
+.aw-input:focus {
+    outline: none;
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, .25);
+}
+
+/* ------------------------------------------------------------------ */
+/* محیط طراحی                                                           */
+/* ------------------------------------------------------------------ */
+
+.aw-designer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.aw-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 9px 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+}
+
+.aw-toolbar-section {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.aw-sep {
+    width: 1px;
+    height: 22px;
+    background: #e5e7eb;
+    margin: 0 3px;
+}
+
+.aw-canvas {
+    position: relative;
+    height: calc(100vh - 330px);
+    min-height: 420px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8fafc;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+
+.aw-status {
+    min-height: 24px;
+    font-size: 12.5px;
+    color: #6b7280;
+    padding: 2px 4px;
+}
+
+.aw-status.is-ok {
+    color: #047857;
+}
+
+.aw-status.is-warn {
+    color: #b45309;
+}
+
+.aw-status.is-error {
+    color: #b91c1c;
+}
+
+/* ------------------------------------------------------------------ */
+/* مودال XML                                                            */
+/* ------------------------------------------------------------------ */
+
+.aw-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, .55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 2000;
+}
+
+.aw-modal[hidden] {
+    display: none;
+}
+
+.aw-modal-box {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 10px;
+    width: min(880px, 95vw);
+    max-height: 90vh;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, .3);
+    overflow: hidden;
+}
+
+.aw-modal-header,
+.aw-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+}
+
+.aw-modal-header {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.aw-modal-footer {
+    border-top: 1px solid #e5e7eb;
+    justify-content: flex-start;
+}
+
+.aw-xml-textarea {
+    flex: 1;
+    min-height: 420px;
+    border: none;
+    resize: vertical;
+    padding: 12px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12.5px;
+    direction: ltr;
+    text-align: left;
+    outline: none;
+}
