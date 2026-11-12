@@ -4,6 +4,7 @@ namespace ArghavanWorkflow\Http\Controllers;
 
 use ArghavanWorkflow\Services\DiagramRepository;
 use ArghavanWorkflow\Support\BpmnXml;
+use ArghavanWorkflow\Support\Lang;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Throwable;
@@ -60,7 +61,7 @@ class DesignerController extends Controller
         if (! $this->storageEnabled()) {
             return response()->json([
                 'ok' => false,
-                'message' => 'ذخیره‌سازی در کانفیگ پکیج غیرفعال است.',
+                'message' => Lang::field('Storing is disabled in the package config.'),
             ], 403);
         }
 
@@ -75,14 +76,14 @@ class DesignerController extends Controller
         if (strlen($data['xml']) > $maxBytes) {
             return response()->json([
                 'ok' => false,
-                'message' => 'حجم XML بیش از حد مجاز است.',
+                'message' => Lang::field('The XML size exceeds the allowed limit.'),
             ], 422);
         }
 
         if (! BpmnXml::isValid($data['xml'])) {
             return response()->json([
                 'ok' => false,
-                'message' => 'XML نمودار معتبر نیست.',
+                'message' => Lang::field('Diagram XML is not valid.'),
             ], 422);
         }
 
@@ -91,7 +92,7 @@ class DesignerController extends Controller
         } catch (Throwable $e) {
             return response()->json([
                 'ok' => false,
-                'message' => 'ذخیره نمودار در دیتابیس ممکن نشد.',
+                'message' => Lang::field('Could not save the diagram in the database.'),
             ], 500);
         }
 
@@ -114,7 +115,7 @@ class DesignerController extends Controller
 
         return redirect()
             ->route('workflow.index')
-            ->with('success', 'نمودار حذف شد.');
+            ->with('success', Lang::field('Diagram deleted.'));
     }
 
     private function storageEnabled(): bool

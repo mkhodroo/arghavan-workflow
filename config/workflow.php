@@ -19,7 +19,8 @@ return [
     // هر ورودی یک ابزار در پالت کنار بوم طراحی می‌سازد:
     //   key   : شناسه یکتای ورودی در پالت
     //   type  : نوع استاندارد BPMN 2.0 که ساخته می‌شود
-    //   label : عنوان فارسی (روی آیکون نمایش داده می‌شود)
+    //   label : کلید انگلیسی عنوان ابزار؛ معادل فارسی را در فایل ترجمه
+    //           پروژه (lang/{locale}/fields.php) بنویسید.
     //   icon  : کلاس آیکون bpmn-font
     //   group : گروه بصری پالت؛ event | activity | gateway | data-object |
     //           data-store | collaboration | artifact
@@ -28,49 +29,49 @@ return [
         [
             'key' => 'create.start-event',
             'type' => 'bpmn:StartEvent',
-            'label' => 'المان شروع',
+            'label' => 'Start Event',
             'icon' => 'bpmn-icon-start-event-none',
             'group' => 'event',
         ],
         [
             'key' => 'create.end-event',
             'type' => 'bpmn:EndEvent',
-            'label' => 'المان پایان',
+            'label' => 'End Event',
             'icon' => 'bpmn-icon-end-event-none',
             'group' => 'event',
         ],
         [
             'key' => 'create.user-task',
             'type' => 'bpmn:UserTask',
-            'label' => 'تسک کاربری',
+            'label' => 'User Task',
             'icon' => 'bpmn-icon-user-task',
             'group' => 'activity',
         ],
         [
             'key' => 'create.script-task',
             'type' => 'bpmn:ScriptTask',
-            'label' => 'اسکریپت تسک',
+            'label' => 'Script Task',
             'icon' => 'bpmn-icon-script-task',
             'group' => 'activity',
         ],
         [
             'key' => 'create.exclusive-gateway',
             'type' => 'bpmn:ExclusiveGateway',
-            'label' => 'گیت‌وی شرطی',
+            'label' => 'Exclusive Gateway',
             'icon' => 'bpmn-icon-gateway-xor',
             'group' => 'gateway',
         ],
         [
             'key' => 'create.pool',
             'type' => 'bpmn:Participant',
-            'label' => 'استخر (Pool)',
+            'label' => 'Pool',
             'icon' => 'bpmn-icon-participant',
             'group' => 'collaboration',
         ],
         [
             'key' => 'create.lane',
             'type' => 'bpmn:Lane',
-            'label' => 'لین (Lane)',
+            'label' => 'Lane',
             'icon' => 'bpmn-icon-lane',
             'group' => 'collaboration',
         ],
@@ -89,11 +90,22 @@ return [
     ],
 
     // نسخه‌ای که روی آدرس فایل‌های استاتیک می‌نشیند (برای کش مرورگر)
-    'version' => '1.1.0',
+    // با هر تغییر در JS/CSS این مقدار را بالا ببرید تا کش مرورگر شکسته شود.
+    'version' => '1.4.0',
 
     // ------------------------------------------------------------------
-    // ذخیره‌سازی نمودارها (کاملا در دیتابیس؛ هیچ فایلی ساخته نمی‌شود)
+    // ذخیره‌سازی نمودارها (کاملا در دیتابیس با migration؛ هیچ فایلی ساخته نمی‌شود)
     // ------------------------------------------------------------------
+    // جدول‌ها با اجرای `php artisan migrate` ساخته می‌شوند:
+    //   workflow_processes        فرایندها (هر نمودار = یک فرایند)
+    //   workflow_start_events     المان‌های شروع
+    //   workflow_end_events       المان‌های پایان
+    //   workflow_user_tasks       تسک‌های کاربری + تنظیمات آن‌ها
+    //   workflow_script_tasks     اسکریپت تسک‌ها
+    //   workflow_exclusive_gateways گیت‌وی‌های شرطی
+    //   workflow_pools            استخرها (Pool)
+    //   workflow_lanes            لین‌ها (Lane)
+    //   workflow_sequence_flows   جریان‌های ترتیبی بین گره‌ها
     'storage' => [
         // برای غیرفعال کردن ذخیره‌سازی (فقط مشاهده/خروجی گرفتن) false کنید
         'enabled' => true,
@@ -101,17 +113,20 @@ return [
         // اتصال دیتابیس (null = اتصال پیش‌فرض لاراول)
         'connection' => null,
 
-        // نام جدول نمودارها؛ در صورت نبود به‌صورت خودکار ساخته می‌شود
-        // (بدون migration و بدون تولید فایل)
-        'table' => 'workflow_diagrams',
+        // نام جدول فرایندها
+        'table' => 'workflow_processes',
 
-        // ساخت خودکار جدول در صورت نبود
-        'auto_create' => true,
-
-        // ورود خودکار فایل‌های JSON قدیمی (ذخیره‌سازی نسخه‌های قبلی پکیج)
-        // به دیتابیس؛ پس از ورود موفق فایل قدیمی حذف می‌شود.
-        'import_legacy' => true,
-        'legacy_path' => storage_path('arghavan-workflow'),
+        // نام جدول‌های المان‌ها (هر نوع المان، جدول مخصوص خودش)
+        'tables' => [
+            'start_events' => 'workflow_start_events',
+            'end_events' => 'workflow_end_events',
+            'user_tasks' => 'workflow_user_tasks',
+            'script_tasks' => 'workflow_script_tasks',
+            'exclusive_gateways' => 'workflow_exclusive_gateways',
+            'pools' => 'workflow_pools',
+            'lanes' => 'workflow_lanes',
+            'sequence_flows' => 'workflow_sequence_flows',
+        ],
 
         // حداکثر حجم مجاز XML نمودار (بایت)
         'max_xml_bytes' => 2 * 1024 * 1024,

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * ØªØ³Øªâ€ŒÙ‡Ø§ÛŒ Ø³Ø¨Ú© Ù¾Ú©ÛŒØ¬ Â«Ø§Ø±ØºÙˆØ§Ù† ÙˆØ±Ú©ÙÙ„ÙˆÂ» (Ø¨Ø¯ÙˆÙ† Ù†ÛŒØ§Ø² Ø¨Ù‡ Ù†ØµØ¨ Ù„Ø§Ø±Ø§ÙˆÙ„).
+ * تست‌های سبک پکیج «ارغوان ورکفلو» (بدون نیاز به نصب لاراول).
  *
- * Ø§Ø¬Ø±Ø§:  php tests/run.php
+ * اجرا:  php tests/run.php
  *
- * Ø§Ø³ØªØ§Ø¨â€ŒÙ‡Ø§ÛŒ Ø­Ø¯Ø§Ù‚Ù„ÛŒ helperÙ‡Ø§ÛŒ Ù„Ø§Ø±Ø§ÙˆÙ„ (config / route / storage_path)
- * ÙÙ‚Ø· ÙˆÙ‚ØªÛŒ ØªØ¹Ø±ÛŒÙ Ù†Ø´Ø¯Ù‡ Ø¨Ø§Ø´Ù†Ø¯ Ø³Ø§Ø®ØªÙ‡ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯ ØªØ§ Ø§Ø¬Ø±Ø§ÛŒ ØªØ³Øª Ø¯Ø±ÙˆÙ† Ù¾Ø±ÙˆÚ˜Ù‡
- * Ù„Ø§Ø±Ø§ÙˆÙ„ Ù‡Ù… Ø¨ÛŒâ€ŒØ®Ø·Ø± Ø¨Ø§Ø´Ø¯.
+ * استاب‌های حداقلی helperهای لاراول (config / route / storage_path)
+ * فقط وقتی تعریف نشده باشند ساخته می‌شوند تا اجرای تست درون پروژه
+ * لاراول هم بی‌خطر باشد.
  */
 
 error_reporting(E_ALL);
@@ -53,17 +53,19 @@ if (! function_exists('route')) {
 
 require $AW_ROOT.'/src/Support/BpmnXml.php';
 require $AW_ROOT.'/src/Support/Assets.php';
-require $AW_ROOT.'/src/Services/DiagramRepository.php';
+require $AW_ROOT.'/src/Support/TableNames.php';
+require $AW_ROOT.'/src/Support/BpmnXmlParser.php';
 require __DIR__.'/stubs.php';
 require $AW_ROOT.'/src/Http/Controllers/AssetController.php';
 
 use ArghavanWorkflow\Http\Controllers\AssetController;
-use ArghavanWorkflow\Services\DiagramRepository;
 use ArghavanWorkflow\Support\Assets;
 use ArghavanWorkflow\Support\BpmnXml;
+use ArghavanWorkflow\Support\BpmnXmlParser;
+use ArghavanWorkflow\Support\TableNames;
 
 // ------------------------------------------------------------------
-// Ø§Ø¨Ø²Ø§Ø± check
+// ابزار check
 // ------------------------------------------------------------------
 $AW_PASSED = 0;
 $AW_FAILED = 0;
@@ -81,38 +83,19 @@ function check(string $label, bool $condition): void
     }
 }
 
-function removeDirectory(string $dir): void
-{
-    if (! is_dir($dir)) {
-        return;
-    }
-
-    foreach (scandir($dir) as $item) {
-        if ($item === '.' || $item === '..') {
-            continue;
-        }
-
-        $path = $dir.DIRECTORY_SEPARATOR.$item;
-
-        is_dir($path) ? removeDirectory($path) : @unlink($path);
-    }
-
-    @rmdir($dir);
-}
-
 // ------------------------------------------------------------------
-// 1) Ú©Ø§Ù†ÙÛŒÚ¯ Ù¾Ú©ÛŒØ¬
+// 1) کانفیگ پکیج
 // ------------------------------------------------------------------
 echo PHP_EOL.'1) config/workflow.php'.PHP_EOL;
 
 $config = require $AW_ROOT.'/config/workflow.php';
 
-check('route_prefix Ø¨Ø±Ø§Ø¨Ø± workflow Ø§Ø³Øª', $config['route_prefix'] === 'workflow');
-check('layout Ù¾ÛŒØ´â€ŒÙØ±Ø¶ behin-layouts.app Ø§Ø³Øª', $config['layout'] === 'behin-layouts.app');
-check('Ù¾Ø§Ù„Øª Ø¯Ù‚ÛŒÙ‚Ø§ 7 Ø§Ø¨Ø²Ø§Ø± Ø¯Ø§Ø±Ø¯', count($config['palette']) === 7);
+check('route_prefix برابر workflow است', $config['route_prefix'] === 'workflow');
+check('layout پیش‌فرض behin-layouts.app است', $config['layout'] === 'behin-layouts.app');
+check('پالت دقیقا 7 ابزار دارد', count($config['palette']) === 7);
 
 check(
-    'ØªØ±ØªÛŒØ¨ Ùˆ Ø§Ù†ÙˆØ§Ø¹ BPMN Ø¯Ø±Ø³Øª Ø§Ø³Øª',
+    'ترتیب و انواع BPMN درست است',
     array_column($config['palette'], 'type') === [
         'bpmn:StartEvent',
         'bpmn:EndEvent',
@@ -124,14 +107,29 @@ check(
     ]
 );
 
-check('Ù‡Ù…Ù‡ Ø¢ÛŒÚ©ÙˆÙ†â€ŒÙ‡Ø§ Ù¾Ø± Ø´Ø¯Ù‡â€ŒØ§Ù†Ø¯', count(array_filter(array_column($config['palette'], 'icon'))) === 7);
-check('Ù‡Ù…Ù‡ labelÙ‡Ø§ÛŒ ÙØ§Ø±Ø³ÛŒ Ù¾Ø± Ø´Ø¯Ù‡â€ŒØ§Ù†Ø¯', count(array_filter(array_column($config['palette'], 'label'))) === 7);
-check('storage.enabled Ù¾ÛŒØ´â€ŒÙØ±Ø¶ true Ø§Ø³Øª', $config['storage']['enabled'] === true);
-check('storage.table Ù¾ÛŒØ´â€ŒÙØ±Ø¶ workflow_diagrams Ø§Ø³Øª', $config['storage']['table'] === 'workflow_diagrams');
-check('ÙØ§ÛŒÙ„â€ŒØ§ÛŒ Ø¨Ø±Ø§ÛŒ Ø°Ø®ÛŒØ±Ù‡ Ù„Ø§Ø²Ù… Ù†ÛŒØ³Øª (Ø¨Ø¯ÙˆÙ† path)', ! isset($config['storage']['path']));
+check('همه آیکون‌ها پر شده‌اند', count(array_filter(array_column($config['palette'], 'icon'))) === 7);
+check('همه labelهای فارسی پر شده‌اند', count(array_filter(array_column($config['palette'], 'label'))) === 7);
+check('storage.enabled پیش‌فرض true است', $config['storage']['enabled'] === true);
+check('storage.table پیش‌فرض workflow_processes است', $config['storage']['table'] === 'workflow_processes');
+check(
+    'جدول همه‌ی المان‌ها در کانفیگ تعریف شده است',
+    array_keys($config['storage']['tables']) === [
+        'start_events',
+        'end_events',
+        'user_tasks',
+        'script_tasks',
+        'exclusive_gateways',
+        'pools',
+        'lanes',
+        'sequence_flows',
+    ]
+);
+check('ساخت خودکار جدول (PDO) حذف شده است', ! isset($config['storage']['auto_create']));
+check('ورود فایل JSON قدیمی حذف شده است', ! isset($config['storage']['import_legacy']));
+check('فایل‌ای برای ذخیره لازم نیست (بدون path)', ! isset($config['storage']['path']));
 
 // ------------------------------------------------------------------
-// 2) Ø§Ø¹ØªØ¨Ø§Ø±Ø³Ù†Ø¬ XML
+// 2) اعتبارسنج XML
 // ------------------------------------------------------------------
 echo PHP_EOL.'2) BpmnXml'.PHP_EOL;
 
@@ -139,104 +137,193 @@ $validXml = '<?xml version="1.0" encoding="UTF-8"?>'
     .'<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL">'
     .'<bpmn:process id="Process_1" /></bpmn:definitions>';
 
-check('XML Ù…Ø¹ØªØ¨Ø± Ù¾Ø°ÛŒØ±ÙØªÙ‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯', BpmnXml::isValid($validXml));
-check('XML Ø®Ø±Ø§Ø¨ Ø±Ø¯ Ù…ÛŒâ€ŒØ´ÙˆØ¯', ! BpmnXml::isValid('<bpmn:definitions><unclosed'));
-check('Ø±Ø´ØªÙ‡ Ø®Ø§Ù„ÛŒ Ø±Ø¯ Ù…ÛŒâ€ŒØ´ÙˆØ¯', ! BpmnXml::isValid(''));
-check('Ù…ØªÙ† Ù…Ø¹Ù…ÙˆÙ„ÛŒ Ø±Ø¯ Ù…ÛŒâ€ŒØ´ÙˆØ¯', ! BpmnXml::isValid('hello world'));
-check('Ø³Ù†Ø¯ Ø¨Ø¯ÙˆÙ† definitions Ø±Ø¯ Ù…ÛŒâ€ŒØ´ÙˆØ¯', ! BpmnXml::isValid('<?xml version="1.0"?><foo />'));
+check('XML معتبر پذیرفته می‌شود', BpmnXml::isValid($validXml));
+check('XML خراب رد می‌شود', ! BpmnXml::isValid('<bpmn:definitions><unclosed'));
+check('رشته خالی رد می‌شود', ! BpmnXml::isValid(''));
+check('متن معمولی رد می‌شود', ! BpmnXml::isValid('hello world'));
+check('سند بدون definitions رد می‌شود', ! BpmnXml::isValid('<?xml version="1.0"?><foo />'));
 
 // ------------------------------------------------------------------
-// 3) Ù…Ø®Ø²Ù† Ù†Ù…ÙˆØ¯Ø§Ø±Ù‡Ø§ (Ø¯ÛŒØªØ§Ø¨ÛŒØ³Ø› Ø¨Ø¯ÙˆÙ† ÙØ§ÛŒÙ„)
+// 3) تجزیه‌ی XML به جداول المان‌ها (BpmnXmlParser)
 // ------------------------------------------------------------------
-echo PHP_EOL.'3) DiagramRepository'.PHP_EOL;
+echo PHP_EOL.'3) BpmnXmlParser'.PHP_EOL;
 
-$pdo = new PDO('sqlite::memory:');
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$diagramXml = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:aw="http://arghavan-workflow.local/config"
+                  id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_1" name="استخر اصلی" processRef="Process_1" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1" name="فرایند تصویب" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_1" name="کارشناس">
+        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_1" name="شروع" />
+    <bpmn:userTask id="UserTask_1" name="بررسی">
+      <bpmn:extensionElements>
+        <aw:config>
+          <aw:formId>12</aw:formId>
+          <aw:actor>5</aw:actor>
+          <aw:roleId>3</aw:roleId>
+          <aw:assignment_type>normal</aw:assignment_type>
+          <aw:case_name>case_1</aw:case_name>
+          <aw:duration>30</aw:duration>
+          <aw:order>1</aw:order>
+          <aw:is_preview>1</aw:is_preview>
+          <aw:show_cancel_button>0</aw:show_cancel_button>
+          <aw:color>#111111</aw:color>
+          <aw:background>#eeeeee</aw:background>
+        </aw:config>
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_1" name="تایید؟" default="Flow_2" />
+    <bpmn:scriptTask id="ScriptTask_1" name="ثبت" scriptFormat="javascript">
+      <bpmn:script>return 1;</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="EndEvent_1" name="پایان">
+      <bpmn:terminateEventDefinition />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="UserTask_1" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Gateway_1" targetRef="EndEvent_1">
+      <bpmn:conditionExpression>${ok}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+  </bpmn:process>
+</bpmn:definitions>
+XML;
 
-$repo = new DiagramRepository($pdo, 'workflow_diagrams');
+$parsed = BpmnXmlParser::parse($diagramXml);
 
-check('Ø¬Ø¯ÙˆÙ„ Ø®ÙˆØ¯Ú©Ø§Ø± Ø³Ø§Ø®ØªÙ‡ Ùˆ Ø¯Ø± Ø§Ø¨ØªØ¯Ø§ Ø®Ø§Ù„ÛŒ Ø§Ø³Øª', $repo->all() === []);
+check('فرایند استخراج شد', count($parsed['processes']) === 1);
+check('نام فرایند درست است', $parsed['processes'][0]['name'] === 'فرایند تصویب');
+check('isExecutable خوانده شد', $parsed['processes'][0]['is_executable'] === true);
 
-$document = $repo->save(null, 'ÙØ±Ø§ÛŒÙ†Ø¯ ØªØµÙˆÛŒØ¨', $validXml);
-check('Ø´Ù†Ø§Ø³Ù‡ Ù…Ø¹ØªØ¨Ø± ØªÙˆÙ„ÛŒØ¯ Ø´Ø¯', DiagramRepository::isValidId($document['id']));
-check('Ù†Ø§Ù… ÙØ§Ø±Ø³ÛŒ Ø­ÙØ¸ Ø´Ø¯', $document['name'] === 'ÙØ±Ø§ÛŒÙ†Ø¯ ØªØµÙˆÛŒØ¨');
+check('المان شروع استخراج شد', count($parsed['start_events']) === 1);
+check('شناسه المان شروع درست است', $parsed['start_events'][0]['element_id'] === 'StartEvent_1');
+check('نام المان شروع درست است', $parsed['start_events'][0]['name'] === 'شروع');
 
-$found = $repo->find($document['id']);
-check('find Ø³Ù†Ø¯ Ø±Ø§ Ø¨Ø±Ù…ÛŒâ€ŒÚ¯Ø±Ø¯Ø§Ù†Ø¯', $found !== null && $found['xml'] === $validXml);
-check('all ÛŒÚ© Ù…ÙˆØ±Ø¯ Ø¯Ø§Ø±Ø¯', count($repo->all()) === 1);
+check('المان پایان استخراج شد', count($parsed['end_events']) === 1);
+check('نوع رویداد پایان terminate است', $parsed['end_events'][0]['event_definition'] === 'terminate');
 
-$updated = $repo->save($document['id'], 'Ø¹Ù†ÙˆØ§Ù† Ø¬Ø¯ÛŒØ¯', $validXml.'<!--x-->');
-check('Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ù‡Ù…Ø§Ù† Ø´Ù†Ø§Ø³Ù‡ Ø±Ø§ Ù†Ú¯Ù‡ Ù…ÛŒâ€ŒØ¯Ø§Ø±Ø¯', $updated['id'] === $document['id']);
-check('Ø¨Ø¹Ø¯ Ø§Ø² Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ù‡Ù…Ú†Ù†Ø§Ù† ÛŒÚ© Ø³Ù†Ø¯ Ø§Ø³Øª', count($repo->all()) === 1);
-check('Ù†Ø§Ù… Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ø´Ø¯', $repo->find($document['id'])['name'] === 'Ø¹Ù†ÙˆØ§Ù† Ø¬Ø¯ÛŒØ¯');
+check('تسک کاربری استخراج شد', count($parsed['user_tasks']) === 1);
+$task = $parsed['user_tasks'][0];
+check('شناسه تسک کاربری درست است', $task['element_id'] === 'UserTask_1');
+check('نام تسک کاربری درست است', $task['name'] === 'بررسی');
+check('form_id از تنظیمات قدیمی خوانده شد', $task['form_id'] === '12');
+check('actor از تنظیمات قدیمی خوانده شد', $task['actor'] === '5');
+check('role_id از تنظیمات قدیمی خوانده شد', $task['role_id'] === '3');
+check('assignment_type خوانده شد', $task['assignment_type'] === 'normal');
+check('case_name خوانده شد', $task['case_name'] === 'case_1');
+check('duration خوانده شد', $task['duration'] === '30');
+check('order خوانده شد', $task['order'] === '1');
+check('is_preview بولی شد', $task['is_preview'] === true);
+check('show_cancel_button بولی شد', $task['show_cancel_button'] === false);
+check('color خوانده شد', $task['color'] === '#111111');
+check('background خوانده شد', $task['background'] === '#eeeeee');
 
-check('find Ø¨Ø§ Ø´Ù†Ø§Ø³Ù‡ traversal Ø±Ø¯ Ù…ÛŒâ€ŒØ´ÙˆØ¯', $repo->find('../evil') === null);
-check('delete Ø¨Ø§ Ø´Ù†Ø§Ø³Ù‡ Ù†Ø§Ù…Ø¹ØªØ¨Ø± false Ø§Ø³Øª', $repo->delete('../evil') === false);
-check('delete Ù…ÙˆÙÙ‚ true Ø§Ø³Øª', $repo->delete($document['id']) === true);
-check('Ø¨Ø¹Ø¯ Ø§Ø² Ø­Ø°Ù Ù…Ø®Ø²Ù† Ø®Ø§Ù„ÛŒ Ø§Ø³Øª', $repo->all() === []);
+check('اسکریپت تسک استخراج شد', count($parsed['script_tasks']) === 1);
+check('script_format درست است', $parsed['script_tasks'][0]['script_format'] === 'javascript');
+check('متن اسکریپت درست است', $parsed['script_tasks'][0]['script'] === 'return 1;');
 
-$anonymous = $repo->save(null, '   ', $validXml);
-check('Ù†Ø§Ù… Ø®Ø§Ù„ÛŒ Ø¨Ù‡ Â«Ø¨Ø¯ÙˆÙ† Ø¹Ù†ÙˆØ§Ù†Â» ØªØ¨Ø¯ÛŒÙ„ Ù…ÛŒâ€ŒØ´ÙˆØ¯', $anonymous['name'] === 'Ø¨Ø¯ÙˆÙ† Ø¹Ù†ÙˆØ§Ù†');
+check('گیت‌وی شرطی استخراج شد', count($parsed['exclusive_gateways']) === 1);
+check('جریان پیش‌فرض گیت‌وی درست است', $parsed['exclusive_gateways'][0]['default_flow'] === 'Flow_2');
+
+check('استخر استخراج شد', count($parsed['pools']) === 1);
+check('processRef استخر درست است', $parsed['pools'][0]['process_ref'] === 'Process_1');
+
+check('لین استخراج شد', count($parsed['lanes']) === 1);
+check('والد لین استخر است', $parsed['lanes'][0]['parent_element_id'] === 'Participant_1');
+
+check('جریان‌های ترتیبی استخراج شدند', count($parsed['sequence_flows']) === 2);
+check('sourceRef درست است', $parsed['sequence_flows'][0]['source_ref'] === 'StartEvent_1');
+check('targetRef درست است', $parsed['sequence_flows'][0]['target_ref'] === 'UserTask_1');
+check('conditionExpression خوانده شد', $parsed['sequence_flows'][1]['condition_expression'] === '${ok}');
+check('جریان پیش‌فرض علامت خورد', $parsed['sequence_flows'][1]['is_default'] === true);
+
+check('userTaskIds فقط تسک کاربری برمی‌گرداند', BpmnXmlParser::userTaskIds($diagramXml) === ['UserTask_1']);
+check('userTaskIds برای XML خراب آرایه خالی است', BpmnXmlParser::userTaskIds('<broken') === []);
 
 try {
-    new DiagramRepository($pdo, 'bad-table;drop table users');
+    BpmnXmlParser::parse('<broken');
 
-    check('Ù†Ø§Ù… Ø¬Ø¯ÙˆÙ„ Ù†Ø§Ù…Ø¹ØªØ¨Ø± Ø±Ø¯ Ù…ÛŒâ€ŒØ´ÙˆØ¯', false);
-} catch (RuntimeException) {
-    check('Ù†Ø§Ù… Ø¬Ø¯ÙˆÙ„ Ù†Ø§Ù…Ø¹ØªØ¨Ø± Ø±Ø¯ Ù…ÛŒâ€ŒØ´ÙˆØ¯', true);
+    check('XML نامعتبر استثنا می‌دهد', false);
+} catch (InvalidArgumentException) {
+    check('XML نامعتبر استثنا می‌دهد', true);
 }
 
-// ÙˆØ±ÙˆØ¯ ÙØ§ÛŒÙ„â€ŒÙ‡Ø§ÛŒ JSON Ù‚Ø¯ÛŒÙ…ÛŒ Ø¨Ù‡ Ø¯ÛŒØªØ§Ø¨ÛŒØ³
-$legacyDir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'arghavan-legacy-test-'.uniqid();
-@mkdir($legacyDir, 0755, true);
-file_put_contents(
-    $legacyDir.DIRECTORY_SEPARATOR.'legacy01.json',
-    json_encode([
-        'id' => 'legacy01',
-        'name' => 'Ù†Ù…ÙˆØ¯Ø§Ø± Ù‚Ø¯ÛŒÙ…ÛŒ',
-        'xml' => $validXml,
-        'created_at' => '2025-01-01 10:00:00',
-        'updated_at' => '2025-01-02 11:00:00',
-    ], JSON_UNESCAPED_UNICODE)
+// ------------------------------------------------------------------
+// 3-ب) نام جداول و فایل‌های migration/مدل
+// ------------------------------------------------------------------
+echo PHP_EOL.'3-ب) جداول و مدل‌ها'.PHP_EOL;
+
+check('نام جدول فرایندها پیش‌فرض است', TableNames::processes() === 'workflow_processes');
+check('نام جدول تسک‌های کاربری پیش‌فرض است', TableNames::userTasks() === 'workflow_user_tasks');
+check('نام جدول جریان‌های ترتیبی پیش‌فرض است', TableNames::sequenceFlows() === 'workflow_sequence_flows');
+
+$packageFiles = [
+    'src/Migrations/2026_11_06_000001_create_workflow_processes_table.php',
+    'src/Migrations/2026_11_06_000002_create_workflow_start_events_table.php',
+    'src/Migrations/2026_11_06_000003_create_workflow_end_events_table.php',
+    'src/Migrations/2026_11_06_000004_create_workflow_user_tasks_table.php',
+    'src/Migrations/2026_11_06_000005_create_workflow_script_tasks_table.php',
+    'src/Migrations/2026_11_06_000006_create_workflow_exclusive_gateways_table.php',
+    'src/Migrations/2026_11_06_000007_create_workflow_pools_table.php',
+    'src/Migrations/2026_11_06_000008_create_workflow_lanes_table.php',
+    'src/Migrations/2026_11_06_000009_create_workflow_sequence_flows_table.php',
+    'src/Migrations/2026_11_06_000010_migrate_legacy_workflow_diagrams_table.php',
+    'src/Models/WorkflowProcess.php',
+    'src/Models/Elements/BpmnElement.php',
+    'src/Models/Elements/StartEvent.php',
+    'src/Models/Elements/EndEvent.php',
+    'src/Models/Elements/UserTask.php',
+    'src/Models/Elements/ScriptTask.php',
+    'src/Models/Elements/ExclusiveGateway.php',
+    'src/Models/Elements/Pool.php',
+    'src/Models/Elements/Lane.php',
+    'src/Models/Elements/SequenceFlow.php',
+    'src/Services/DiagramSynchronizer.php',
+];
+
+foreach ($packageFiles as $file) {
+    check('موجود است: '.$file, is_file($AW_ROOT.'/'.$file));
+}
+
+$repositorySource = (string) file_get_contents($AW_ROOT.'/src/Services/DiagramRepository.php');
+check(
+    'مخزن دیگر از PDO استفاده نمی‌کند',
+    preg_match('/\bnew\s+PDO\b|PDO::|use\s+PDO\s*;/', $repositorySource) === 0
 );
-
-$legacyPdo = new PDO('sqlite::memory:');
-$legacyPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-$legacyRepo = new DiagramRepository($legacyPdo, 'workflow_diagrams', $legacyDir);
-
-check('Ø³Ù†Ø¯ Ù‚Ø¯ÛŒÙ…ÛŒ ÙˆØ§Ø±Ø¯ Ø¯ÛŒØªØ§Ø¨ÛŒØ³ Ø´Ø¯', count($legacyRepo->all()) === 1);
-check('Ø²Ù…Ø§Ù† Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ø³Ù†Ø¯ Ù‚Ø¯ÛŒÙ…ÛŒ Ø­ÙØ¸ Ø´Ø¯', $legacyRepo->find('legacy01')['updated_at'] === '2025-01-02 11:00:00');
-check('ÙØ§ÛŒÙ„ Ù‚Ø¯ÛŒÙ…ÛŒ Ù¾Ø³ Ø§Ø² ÙˆØ±ÙˆØ¯ Ø­Ø°Ù Ø´Ø¯', ! is_file($legacyDir.DIRECTORY_SEPARATOR.'legacy01.json'));
-check('Ù¾ÙˆØ´Ù‡ Ø®Ø§Ù„ÛŒ Ù‚Ø¯ÛŒÙ…ÛŒ Ø­Ø°Ù Ø´Ø¯', ! is_dir($legacyDir));
-
-removeDirectory($legacyDir);
+check('مخزن از مدل فرایند استفاده می‌کند', strpos($repositorySource, 'WorkflowProcess') !== false);
 
 // ------------------------------------------------------------------
-// 4) Ø³Ø§Ø®Øª Ø¢Ø¯Ø±Ø³ assetÙ‡Ø§
+// 4) ساخت آدرس assetها
 // ------------------------------------------------------------------
 echo PHP_EOL.'4) Assets'.PHP_EOL;
 
 $GLOBALS['AW_TEST_CONFIG'] = ['workflow' => $config];
 
 $styles = Assets::styles();
-check('Ø³Ù‡ CSS Ø¨Ø±Ù…ÛŒâ€ŒÚ¯Ø±Ø¯Ø§Ù†Ø¯', count($styles) === 3);
-check('Ù…Ø³ÛŒØ± Ù…Ø­Ù„ÛŒ Ø¨Ù‡ bpmn-js Ø§Ø´Ø§Ø±Ù‡ Ø¯Ø§Ø±Ø¯', strpos($styles[0], 'bpmn-js/assets/diagram-js.css') !== false);
-check('Ù†Ø³Ø®Ù‡ Ø±ÙˆÛŒ Ø¢Ø¯Ø±Ø³ Ù†ÙˆØ´ØªÙ‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯', strpos($styles[0], '?v=') !== false);
+check('سه CSS برمی‌گرداند', count($styles) === 3);
+check('مسیر محلی به bpmn-js اشاره دارد', strpos($styles[0], 'bpmn-js/assets/diagram-js.css') !== false);
+check('نسخه روی آدرس نوشته می‌شود', strpos($styles[0], '?v=') !== false);
 
 $scripts = Assets::scripts();
-check('Ø¨Ø§Ù†Ø¯Ù„ bpmn-js Ø§ÙˆÙ„ Ø§Ø³Øª', strpos($scripts[0], 'bpmn-modeler.production.min.js') !== false);
-check('designer.js Ø¢Ø®Ø± Ø§Ø³Øª', strpos(end($scripts), 'js/designer.js') !== false);
-check('CSS Ù…Ø´ØªØ±Ú© Ù¾Ú©ÛŒØ¬ Ø¢Ø¯Ø±Ø³ Ù…Ø­Ù„ÛŒ Ø¯Ø§Ø±Ø¯', strpos(Assets::stylesheet(), 'css/workflow.css') !== false);
+check('باندل bpmn-js اول است', strpos($scripts[0], 'bpmn-modeler.production.min.js') !== false);
+check('designer.js آخر است', strpos(end($scripts), 'js/designer.js') !== false);
+check('CSS مشترک پکیج آدرس محلی دارد', strpos(Assets::stylesheet(), 'css/workflow.css') !== false);
 
 $GLOBALS['AW_TEST_CONFIG']['workflow']['assets']['mode'] = 'cdn';
 $cdnStyles = Assets::styles();
-check('Ø¯Ø± Ø­Ø§Ù„Øª cdn Ø§Ø² unpkg Ù…ÛŒâ€ŒØ¢ÛŒØ¯', strpos($cdnStyles[0], 'https://unpkg.com/bpmn-js@') === 0);
+check('در حالت cdn از unpkg می‌آید', strpos($cdnStyles[0], 'https://unpkg.com/bpmn-js@') === 0);
 $GLOBALS['AW_TEST_CONFIG']['workflow']['assets']['mode'] = 'local';
 
 // ------------------------------------------------------------------
-// 5) ÙØ§ÛŒÙ„â€ŒÙ‡Ø§ÛŒ Ù‡Ù…Ø±Ø§Ù‡ bpmn-js
+// 5) فایل‌های همراه bpmn-js
 // ------------------------------------------------------------------
-echo PHP_EOL.'5) Ø¯Ø§Ø±Ø§ÛŒÛŒâ€ŒÙ‡Ø§ÛŒ bpmn-js'.PHP_EOL;
+echo PHP_EOL.'5) دارایی‌های bpmn-js'.PHP_EOL;
 
 $assetFiles = [
     'resources/assets/bpmn-js/bpmn-modeler.production.min.js',
@@ -248,20 +335,20 @@ $assetFiles = [
 ];
 
 foreach ($assetFiles as $file) {
-    check('Ù…ÙˆØ¬ÙˆØ¯ Ø§Ø³Øª: '.$file, is_file($AW_ROOT.'/'.$file));
+    check('موجود است: '.$file, is_file($AW_ROOT.'/'.$file));
 }
 
 $bundle = file_get_contents($AW_ROOT.'/resources/assets/bpmn-js/bpmn-modeler.production.min.js');
-check('Ø¨Ø§Ù†Ø¯Ù„ Ø³Ø±Ø§Ø³Ø±ÛŒ BpmnJS Ø¯Ø§Ø±Ø¯', strpos($bundle, '.BpmnJS=') !== false);
+check('باندل سراسری BpmnJS دارد', strpos($bundle, '.BpmnJS=') !== false);
 
 $iconCss = file_get_contents($AW_ROOT.'/resources/assets/bpmn-js/assets/bpmn-font/css/bpmn-embedded.css');
 
 foreach (array_column($config['palette'], 'icon') as $icon) {
-    check('Ø¢ÛŒÚ©ÙˆÙ† Ø¯Ø± CSS Ù…ÙˆØ¬ÙˆØ¯ Ø§Ø³Øª: '.$icon, strpos($iconCss, '.'.$icon) !== false);
+    check('آیکون در CSS موجود است: '.$icon, strpos($iconCss, '.'.$icon) !== false);
 }
 
 // ------------------------------------------------------------------
-// 6) Ø§Ù…Ù†ÛŒØª Ø³Ø±Ùˆ assetÙ‡Ø§ (AssetController)
+// 6) امنیت سرو assetها (AssetController)
 // ------------------------------------------------------------------
 echo PHP_EOL.'6) AssetController'.PHP_EOL;
 
@@ -276,37 +363,37 @@ $mimeMethod->setAccessible(true);
 $jsRoot = $AW_ROOT.'/resources/js';
 
 check(
-    'resolve ÙØ§ÛŒÙ„ Ù…Ø¬Ø§Ø² Ø±Ø§ Ù¾ÛŒØ¯Ø§ Ù…ÛŒâ€ŒÚ©Ù†Ø¯',
+    'resolve فایل مجاز را پیدا می‌کند',
     $resolveMethod->invoke($assetController, $jsRoot, 'designer.js') === realpath($jsRoot.'/designer.js')
 );
 
 check(
-    'resolve Ù…Ø³ÛŒØ± traversal Ø±Ø§ Ø±Ø¯ Ù…ÛŒâ€ŒÚ©Ù†Ø¯',
+    'resolve مسیر traversal را رد می‌کند',
     $resolveMethod->invoke($assetController, $jsRoot, '../../composer.json') === null
 );
 
 check(
-    'resolve Ù¾Ø³ÙˆÙ†Ø¯ ØºÛŒØ±Ù…Ø¬Ø§Ø² Ø±Ø§ Ø±Ø¯ Ù…ÛŒâ€ŒÚ©Ù†Ø¯',
+    'resolve پسوند غیرمجاز را رد می‌کند',
     $resolveMethod->invoke($assetController, $AW_ROOT, 'composer.json') === null
 );
 
-check('resolve ÙØ§ÛŒÙ„ Ù†Ø§Ù…ÙˆØ¬ÙˆØ¯ null Ø§Ø³Øª', $resolveMethod->invoke($assetController, $jsRoot, 'missing.js') === null);
-check('resolve Ø±Ø´ØªÙ‡ Ø®Ø§Ù„ÛŒ null Ø§Ø³Øª', $resolveMethod->invoke($assetController, $jsRoot, '') === null);
-check('resolve Ù†Ø§Ù… ÙØ§ÛŒÙ„ Ø¨Ø§ null byte Ø±Ø¯ Ù…ÛŒâ€ŒÚ©Ù†Ø¯', $resolveMethod->invoke($assetController, $jsRoot, "designer.js\0.txt") === null);
+check('resolve فایل ناموجود null است', $resolveMethod->invoke($assetController, $jsRoot, 'missing.js') === null);
+check('resolve رشته خالی null است', $resolveMethod->invoke($assetController, $jsRoot, '') === null);
+check('resolve نام فایل با null byte رد می‌کند', $resolveMethod->invoke($assetController, $jsRoot, "designer.js\0.txt") === null);
 
 check(
-    'packagePath Ø¨Ù‡ Ø±ÛŒØ´Ù‡ Ù¾Ú©ÛŒØ¬ Ù…ÛŒâ€ŒØ±Ø³Ø¯',
+    'packagePath به ریشه پکیج می‌رسد',
     realpath($packageMethod->invoke($assetController, 'resources')) === realpath($AW_ROOT.'/resources')
 );
 
-check('mime Ø¨Ø±Ø§ÛŒ js Ø¯Ø±Ø³Øª Ø§Ø³Øª', strpos($mimeMethod->invoke($assetController, 'a.js'), 'javascript') !== false);
-check('mime Ø¨Ø±Ø§ÛŒ css Ø¯Ø±Ø³Øª Ø§Ø³Øª', $mimeMethod->invoke($assetController, 'a.css') === 'text/css; charset=utf-8');
-check('mime Ø¨Ø±Ø§ÛŒ svg Ø¯Ø±Ø³Øª Ø§Ø³Øª', $mimeMethod->invoke($assetController, 'a.svg') === 'image/svg+xml');
+check('mime برای js درست است', strpos($mimeMethod->invoke($assetController, 'a.js'), 'javascript') !== false);
+check('mime برای css درست است', $mimeMethod->invoke($assetController, 'a.css') === 'text/css; charset=utf-8');
+check('mime برای svg درست است', $mimeMethod->invoke($assetController, 'a.svg') === 'image/svg+xml');
 
 // ------------------------------------------------------------------
-// Ø¬Ù…Ø¹â€ŒØ¨Ù†Ø¯ÛŒ
+// جمع‌بندی
 // ------------------------------------------------------------------
 echo PHP_EOL.str_repeat('-', 50).PHP_EOL;
-echo 'Ù†ØªÛŒØ¬Ù‡: '.$AW_PASSED.' Ù…ÙˆÙÙ‚ØŒ '.$AW_FAILED.' Ù†Ø§Ù…ÙˆÙÙ‚'.PHP_EOL;
+echo 'نتیجه: '.$AW_PASSED.' موفق، '.$AW_FAILED.' ناموفق'.PHP_EOL;
 
 exit($AW_FAILED > 0 ? 1 : 0);

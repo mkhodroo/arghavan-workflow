@@ -1,6 +1,10 @@
 @extends($layout)
 
-@section('title', 'فهرست نمودارها')
+@php
+    $t = fn (string $key): string => \ArghavanWorkflow\Support\Lang::field($key);
+@endphp
+
+@section('title', $t('Diagram List'))
 
 @section('style')
     <link rel="stylesheet" href="{{ \ArghavanWorkflow\Support\Assets::stylesheet() }}">
@@ -9,24 +13,23 @@
 @section('content')
 <div class="aw-card">
     <div class="aw-card-header">
-        <h2>فهرست نمودارها</h2>
-        <a class="aw-btn" href="{{ route('workflow.designer') }}">＋ نمودار جدید</a>
+        <h2>{{ $t('Diagram List') }}</h2>
+        <a class="aw-btn" href="{{ route('workflow.designer') }}">＋ {{ $t('New Diagram') }}</a>
     </div>
 
     @if (! $storageEnabled)
         <p class="aw-muted">
-            ذخیره‌سازی نمودارها در کانفیگ پکیج (<code>workflow.storage.enabled</code>) غیرفعال است؛
-            محیط طراحی فقط برای مشاهده و خروجی گرفتن در دسترس است.
+            {!! str_replace(':key', '<code>workflow.storage.enabled</code>', e($t('Storing diagrams is disabled in the package config (:key); the designer is only available for viewing and export.'))) !!}
         </p>
     @elseif (count($diagrams) === 0)
-        <p class="aw-muted">هنوز نموداری ذخیره نشده است. با «نمودار جدید» شروع کنید.</p>
+        <p class="aw-muted">{{ $t('No diagram has been saved yet. Start with "New Diagram".') }}</p>
     @else
         <table class="aw-table">
             <thead>
                 <tr>
-                    <th>عنوان</th>
-                    <th>آخرین ویرایش</th>
-                    <th>عملیات</th>
+                    <th>{{ $t('Title') }}</th>
+                    <th>{{ $t('Last Modified') }}</th>
+                    <th>{{ $t('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,13 +38,13 @@
                         <td>{{ $diagram['name'] }}</td>
                         <td>{{ $diagram['updated_at'] }}</td>
                         <td class="aw-actions">
-                            <a class="aw-btn small" href="{{ route('workflow.designer', $diagram['id']) }}">ویرایش</a>
+                            <a class="aw-btn small" href="{{ route('workflow.designer', $diagram['id']) }}">{{ $t('Edit') }}</a>
 
                             <form method="POST" action="{{ route('workflow.destroy', $diagram['id']) }}"
-                                  onsubmit="return confirm('این نمودار برای همیشه حذف شود؟');">
+                                  onsubmit="return confirm({{ \Illuminate\Support\Js::from($t('Delete this diagram permanently?')) }});">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="aw-btn small danger">حذف</button>
+                                <button type="submit" class="aw-btn small danger">{{ $t('Delete') }}</button>
                             </form>
                         </td>
                     </tr>

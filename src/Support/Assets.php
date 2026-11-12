@@ -33,7 +33,12 @@ class Assets
     {
         return array_merge(
             self::bpmn(['bpmn-modeler.production.min.js']),
-            [self::local('js/designer.js')]
+            [
+                self::local('js/i18n.js'),
+                self::local('js/taskconfig.js'),
+                self::local('js/scriptconfig.js'),
+                self::local('js/designer.js'),
+            ]
         );
     }
 

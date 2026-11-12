@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ارغوان ورکفلو | Arghavan Workflow
  *
  * محیط طراحی BPMN مبتنی بر bpmn-js (bpmn.io) با پالت سفارشی:
@@ -12,6 +12,16 @@
     'use strict';
 
     var cfg = window.AW_CONFIG || {};
+
+    /**
+     * ترجمه‌ی متن‌ها؛ کلید انگلیسی است و معادل فارسی از
+     * window.AW_CONFIG.i18n (فایل fields پروژه) خوانده می‌شود.
+     */
+    function t(key, replacements) {
+        return typeof window.awTranslate === 'function'
+            ? window.awTranslate(key, replacements)
+            : key;
+    }
 
     // ------------------------------------------------------------------
     // نمودار پیش‌فرض (یک همکاری با یک استخر حاوی المان شروع)؛
@@ -43,13 +53,13 @@
 
     // اگر کانفیگ پالت خالی بود، همین ابزارهای پیش‌فرض استفاده می‌شوند
     var DEFAULT_PALETTE = [
-        { key: 'create.start-event', type: 'bpmn:StartEvent', label: 'المان شروع', icon: 'bpmn-icon-start-event-none', group: 'event' },
-        { key: 'create.end-event', type: 'bpmn:EndEvent', label: 'المان پایان', icon: 'bpmn-icon-end-event-none', group: 'event' },
-        { key: 'create.user-task', type: 'bpmn:UserTask', label: 'تسک کاربری', icon: 'bpmn-icon-user-task', group: 'activity' },
-        { key: 'create.script-task', type: 'bpmn:ScriptTask', label: 'اسکریپت تسک', icon: 'bpmn-icon-script-task', group: 'activity' },
-        { key: 'create.exclusive-gateway', type: 'bpmn:ExclusiveGateway', label: 'گیت‌وی شرطی', icon: 'bpmn-icon-gateway-xor', group: 'gateway' },
-        { key: 'create.pool', type: 'bpmn:Participant', label: 'استخر (Pool)', icon: 'bpmn-icon-participant', group: 'collaboration' },
-        { key: 'create.lane', type: 'bpmn:Lane', label: 'لین (Lane)', icon: 'bpmn-icon-lane', group: 'collaboration' }
+        { key: 'create.start-event', type: 'bpmn:StartEvent', label: 'Start Event', icon: 'bpmn-icon-start-event-none', group: 'event' },
+        { key: 'create.end-event', type: 'bpmn:EndEvent', label: 'End Event', icon: 'bpmn-icon-end-event-none', group: 'event' },
+        { key: 'create.user-task', type: 'bpmn:UserTask', label: 'User Task', icon: 'bpmn-icon-user-task', group: 'activity' },
+        { key: 'create.script-task', type: 'bpmn:ScriptTask', label: 'Script Task', icon: 'bpmn-icon-script-task', group: 'activity' },
+        { key: 'create.exclusive-gateway', type: 'bpmn:ExclusiveGateway', label: 'Exclusive Gateway', icon: 'bpmn-icon-gateway-xor', group: 'gateway' },
+        { key: 'create.pool', type: 'bpmn:Participant', label: 'Pool', icon: 'bpmn-icon-participant', group: 'collaboration' },
+        { key: 'create.lane', type: 'bpmn:Lane', label: 'Lane', icon: 'bpmn-icon-lane', group: 'collaboration' }
     ];
 
     var paletteItems = (cfg.palette && cfg.palette.length) ? cfg.palette : DEFAULT_PALETTE;
@@ -119,8 +129,7 @@
     CustomPaletteProvider.prototype.getPaletteEntries = function () {
         var entries = {},
             create = this._create,
-            elementFactory = this._elementFactory,
-            translate = this._translate;
+            elementFactory = this._elementFactory;
 
         function createAction(item) {
             function createListener(event) {
@@ -132,7 +141,7 @@
                     shape = elementFactory.createParticipantShape();
                 } else if (item.type === 'bpmn:Lane' && !hasParticipant()) {
                     // لین فقط داخل استخر (یا لین دیگر) قابل ریختن است.
-                    setStatus('ابتدا یک «استخر (Pool)» بسازید؛ سپس لین را داخل آن بیندازید.', 'warn');
+                    setStatus(t('Create a Pool first, then drop the Lane inside it.'), 'warn');
 
                     return;
                 } else {
@@ -145,7 +154,7 @@
             return {
                 group: item.group || 'activity',
                 className: item.icon || 'bpmn-icon-task',
-                title: translate(item.label || item.type),
+                title: t(item.label || item.type),
                 action: {
                     dragstart: createListener,
                     click: createListener
@@ -203,18 +212,19 @@
                     var warnings = (result && result.warnings) || [];
 
                     setStatus(
-                        'نمودار بارگذاری شد' +
-                        (warnings.length ? ' (' + warnings.length + ' هشدار)' : ''),
+                        warnings.length
+                            ? t('Diagram loaded with :count warning(s).', { count: warnings.length })
+                            : t('Diagram loaded.'),
                         warnings.length ? 'warn' : 'ok'
                     );
 
                     return true;
                 },
                 function (error) {
-                    var message = (error && error.message) ? error.message : 'خطای ناشناخته';
+                    var message = (error && error.message) ? error.message : t('Unknown error');
 
                     function restore() {
-                        setStatus('XML نامعتبر است: ' + message, 'error');
+                        setStatus(t('Invalid XML: :message', { message: message }), 'error');
                         return false;
                     }
 
@@ -270,7 +280,7 @@
         }
 
         if (!cfg.storageEnabled || !cfg.saveUrl) {
-            setStatus('ذخیره‌سازی فعال نیست؛ می‌توانید XML را از «ویرایش XML» بردارید.', 'warn');
+            setStatus(t('Storing is disabled; you can copy the XML from "Edit XML".'), 'warn');
             return Promise.resolve(false);
         }
 
@@ -293,7 +303,7 @@
             }).then(function (response) {
                 return response.json().then(function (data) {
                     if (!response.ok || !data.ok) {
-                        throw new Error(data.message || 'خطا در ذخیره نمودار');
+                        throw new Error(data.message || t('Failed to save the diagram'));
                     }
 
                     return data;
@@ -310,11 +320,11 @@
                     window.history.replaceState({}, '', data.route);
                 }
 
-                setStatus('نمودار ذخیره شد.', 'ok');
+                setStatus(t('Diagram saved.'), 'ok');
 
                 return true;
             }).catch(function (error) {
-                setStatus(error.message || 'ذخیره نمودار ممکن نشد.', 'error');
+                setStatus(error.message || t('Could not save the diagram.'), 'error');
 
                 return false;
             });
@@ -352,7 +362,7 @@
         try {
             modeler.get('commandStack')[name]();
         } catch (error) {
-            setStatus('دستور در دسترس نیست.', 'warn');
+            setStatus(t('Command is not available.'), 'warn');
         }
     }
 
@@ -367,7 +377,76 @@
 
             canvas.zoom(scale);
         } catch (error) {
-            setStatus('زوم در دسترس نیست.', 'warn');
+            setStatus(t('Zoom is not available.'), 'warn');
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // تنظیمات تسک کاربری (دوبار کلیک روی UserTask)
+    // ------------------------------------------------------------------
+    function wireTaskConfig() {
+        try {
+            var eventBus = modeler.get('eventBus');
+
+            if (!eventBus || typeof eventBus.on !== 'function') {
+                return;
+            }
+
+            eventBus.on('element.dblclick', 1500, function (event) {
+                var element = event && event.element;
+
+                if (!element || (element.type !== 'bpmn:UserTask' && element.type !== 'bpmn:ScriptTask')) {
+                    return;
+                }
+
+                // غیرفعال‌سازی رویداد پیش‌فرض دابل‌کلیک bpmn-js
+                if (typeof event.stopPropagation === 'function') {
+                    event.stopPropagation();
+                }
+
+                // انتخاب مودال متناسب با نوع المان (تسک کاربری یا اسکریپت تسک)
+                var modalName = element.type === 'bpmn:ScriptTask' ? 'AW_SCRIPTCONFIG' : 'AW_TASKCONFIG';
+                var Modal = window[modalName];
+
+                if (!Modal || typeof Modal.open !== 'function') {
+                    setStatus(t('Task configuration modal is not loaded.'), 'warn');
+                    return;
+                }
+
+                // اگر نمودار ذخیره نشده باشد، ابتدا آن را ذخیره کرده و سپس مودال باز می‌شود
+                if (!cfg.docId) {
+                    setStatus(t('Save the diagram before saving its settings.'), 'warn');
+
+                    save().then(function (ok) {
+                        if (ok && cfg.docId) {
+                            Modal.open(cfg.docId, element.id);
+                        }
+                    });
+
+                    return;
+                }
+
+                Modal.open(cfg.docId, element.id);
+            });
+        } catch (error) {
+            // اگر eventBus در دسترس نباشد (مثلاً bpmn-js لود نشده باشد) خطا نادیده گرفته می‌شود
+        }
+    }
+
+    /**
+     * به‌روزرسانی نام المان روی بوم (پس از ذخیره تنظیمات).
+     */
+    function updateElementName(elementId, name) {
+        try {
+            var registry = modeler.get('elementRegistry');
+            var modeling = modeler.get('modeling');
+            var element = registry && typeof registry.get === 'function' ? registry.get(elementId) : null;
+
+            if (element && modeling && typeof modeling.updateProperties === 'function') {
+                modeling.updateProperties(element, { name: name });
+            }
+        } catch (error) {
+            // به‌روزرسانی نام اختیاری است
         }
     }
 
@@ -381,12 +460,12 @@
         onClick('aw-download-xml', function () {
             getCurrentXml().then(function (xml) {
                 if (!xml) {
-                    setStatus('XML در دسترس نیست.', 'error');
+                    setStatus(t('XML is not available.'), 'error');
                     return;
                 }
 
                 download(diagramFileName('bpmn'), xml, 'application/xml;charset=utf-8');
-                setStatus('فایل XML دانلود شد.', 'ok');
+                setStatus(t('XML file downloaded.'), 'ok');
             });
         });
 
@@ -394,9 +473,9 @@
         onClick('aw-download-svg', function () {
             modeler.saveSVG().then(function (result) {
                 download(diagramFileName('svg'), result.svg, 'image/svg+xml;charset=utf-8');
-                setStatus('فایل SVG دانلود شد.', 'ok');
+                setStatus(t('SVG file downloaded.'), 'ok');
             }).catch(function () {
-                setStatus('خروجی SVG ساخته نشد.', 'error');
+                setStatus(t('SVG export failed.'), 'error');
             });
         });
 
@@ -428,7 +507,7 @@
                 };
 
                 reader.onerror = function () {
-                    setStatus('خواندن فایل ممکن نشد.', 'error');
+                    setStatus(t('Could not read the file.'), 'error');
                 };
 
                 reader.readAsText(file);
@@ -483,7 +562,7 @@
 
         // نمودار جدید
         onClick('aw-new', function () {
-            if (!window.confirm('نمودار فعلی کنار گذاشته و یک نمودار خالی ساخته شود؟')) {
+            if (!window.confirm(t('Discard the current diagram and create an empty one?'))) {
                 return;
             }
 
@@ -507,11 +586,14 @@
     // راه‌اندازی
     // ------------------------------------------------------------------
     if (!window.BpmnJS) {
-        setStatus('کتابخانه bpmn-js بارگذاری نشد؛ فایل‌های assets را بررسی کنید.', 'error');
+        setStatus(t('The bpmn-js library is not loaded; check the assets files.'), 'error');
         return;
     }
 
     var modeler = createModeler();
+
+    // در دسترس قرار دادن setStatus برای ماژول‌های دیگر (مثل taskconfig.js)
+    window.setStatus = setStatus;
 
     // API عمومی پکیج برای اتصال به برنامه میزبان
     window.ARGHAVAN_WORKFLOW = {
@@ -520,10 +602,12 @@
         palette: paletteItems,
         getXml: getCurrentXml,
         setXml: importXml,
-        save: save
+        save: save,
+        updateElementName: updateElementName
     };
 
     wireToolbar();
+    wireTaskConfig();
 
     importXml(cfg.initialXml || DEFAULT_XML);
 

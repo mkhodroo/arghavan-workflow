@@ -1,0 +1,268 @@
+/**
+ * مودال تنظیمات «اسکریپت تسک» در طراح BPMN.
+ *
+ * با دوبار کلیک روی یک ScriptTask باز می‌شود و همان تنظیماتی را نشان می‌دهد
+ * که در behin-simple-workflow برای یک «اسکریپت تسک» وجود دارد:
+ * نام تسک و انتخاب اسکریپت از لیست اسکریپت‌های تعریف‌شده در
+ * behin-simple-workflow (wf_scripts). تنظیمات در جدول
+ * workflow_script_tasks ذخیره می‌شوند (script_id به wf_scripts ارجاع دارد).
+ *
+ * وابسته به window.AW_CONFIG که توسط designer.blade.php ساخته می‌شود.
+ */
+(function () {
+    "use strict";
+
+    function cfg() {
+        return window.AW_CONFIG || {};
+    }
+
+    /**
+     * ترجمه‌ی متن‌ها؛ کلید انگلیسی است و معادل فارسی از
+     * window.AW_CONFIG.i18n (فایل fields پروژه) خوانده می‌شود.
+     */
+    function t(key, replacements) {
+        return typeof window.awTranslate === "function"
+            ? window.awTranslate(key, replacements)
+            : key;
+    }
+
+    function el(id) {
+        return document.getElementById(id);
+    }
+
+    function status(message, type) {
+        if (typeof window.setStatus === "function") {
+            window.setStatus(message, type);
+        }
+    }
+
+    function setValue(id, value) {
+        var node = el(id);
+
+        if (node) {
+            node.value = value === null || value === undefined ? "" : String(value);
+        }
+    }
+
+    function getValue(id) {
+        var node = el(id);
+
+        return node ? node.value : "";
+    }
+
+    function fillSelect(id, options, value, placeholder) {
+        var select = el(id);
+
+        if (!select) {
+            return;
+        }
+
+        select.innerHTML = "";
+
+        var first = document.createElement("option");
+        first.value = "";
+        first.textContent = placeholder || t("--- Select ---");
+        select.appendChild(first);
+
+        (options || []).forEach(function (option) {
+            var item = document.createElement("option");
+            item.value = option.id;
+            item.textContent = option.name || option.id;
+            select.appendChild(item);
+        });
+
+        select.value = value === null || value === undefined ? "" : String(value);
+    }
+
+    var Modal = {
+        docId: null,
+        elementId: null,
+        lists: { scripts: [] },
+
+        open: function (docId, elementId) {
+            if (!docId) {
+                status(t("Save the diagram before saving its settings."), "warn");
+                return;
+            }
+
+            this.docId = docId;
+            this.elementId = elementId;
+
+            var title = el("aw-sc-title");
+
+            if (title) {
+                title.textContent = t("Script Task Configuration") + " — " + elementId;
+            }
+
+            var modal = el("aw-scriptconfig-modal");
+
+            if (modal) {
+                modal.hidden = false;
+            }
+
+            this.apply({}); // پاک‌سازی مقادیر قبلی تا داده‌ی کهنه نمایش داده نشود
+            this.refreshLists().then(function () {
+                return Modal.load();
+            });
+        },
+
+        close: function () {
+            var modal = el("aw-scriptconfig-modal");
+
+            if (modal) {
+                modal.hidden = true;
+            }
+        },
+
+        refreshLists: function () {
+            var url = cfg().scriptConfigListUrl;
+
+            if (!url) {
+                return Promise.resolve();
+            }
+
+            return fetch(url, { headers: { Accept: "application/json" } })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    Modal.lists.scripts = data.scripts || [];
+                })
+                .catch(function () {
+                    // فهرست اسکریپت‌ها اختیاری است؛ در صورت خطا فیلد خالی می‌ماند.
+                });
+        },
+
+        load: function () {
+            var base = cfg().scriptConfigGetUrl;
+
+            if (!base) {
+                return Promise.resolve();
+            }
+
+            var url = base
+                .replace("{doc}", encodeURIComponent(this.docId))
+                .replace("{element}", encodeURIComponent(this.elementId));
+
+            return fetch(url, { headers: { Accept: "application/json" } })
+                .then(function (response) {
+                    return response.json().then(function (data) {
+                        return { ok: response.ok, data: data };
+                    });
+                })
+                .then(function (result) {
+                    if (!result.ok || !result.data.ok) {
+                        throw new Error(result.data.message || t("Configuration was not found."));
+                    }
+
+                    Modal.apply(result.data.config || {});
+                })
+                .catch(function (error) {
+                    status(error.message || t("Failed to load the configuration."), "error");
+                });
+        },
+
+        apply: function (config) {
+            setValue("aw-sc-name", config.name);
+            fillSelect("aw-sc-script", this.lists.scripts, config.script_id, t("--- Select Script ---"));
+        },
+
+        collect: function () {
+            return {
+                name: getValue("aw-sc-name"),
+                script_id: getValue("aw-sc-script"),
+            };
+        },
+
+        save: function () {
+            var base = cfg().scriptConfigSaveUrl;
+
+            if (!base || !this.docId) {
+                status(t("Save the diagram before saving its settings."), "warn");
+                return;
+            }
+
+            var url = base
+                .replace("{doc}", encodeURIComponent(this.docId))
+                .replace("{element}", encodeURIComponent(this.elementId));
+
+            var payload = this.collect();
+            var button = el("aw-sc-save");
+
+            if (button) {
+                button.disabled = true;
+            }
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN": cfg().csrf || ""
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(function (response) {
+                    return response.json().then(function (data) {
+                        return { ok: response.ok, data: data };
+                    });
+                })
+                .then(function (result) {
+                    if (!result.ok || !result.data.ok) {
+                        throw new Error(result.data.message || t("Saving failed."));
+                    }
+
+                    status(t("Task settings saved."), "ok");
+
+                    var api = window.ARGHAVAN_WORKFLOW;
+
+                    if (result.data.xml && api && typeof api.setXml === "function") {
+                        // همگام‌سازی نمودار درون‌مرورگر با تنظیمات ذخیره‌شده
+                        api.setXml(result.data.xml);
+                    } else if (payload.name && api && typeof api.updateElementName === "function") {
+                        api.updateElementName(Modal.elementId, payload.name);
+                    }
+
+                    Modal.close();
+                })
+                .catch(function (error) {
+                    status(error.message || t("Could not save the settings."), "error");
+                })
+                .finally(function () {
+                    if (button) {
+                        button.disabled = false;
+                    }
+                });
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // اتصال رویدادهای مودال
+    // ------------------------------------------------------------------
+    function wire() {
+        Array.prototype.forEach.call(
+            document.querySelectorAll("[data-aw-sc-close]"),
+            function (button) {
+                button.addEventListener("click", function () {
+                    Modal.close();
+                });
+            }
+        );
+
+        var saveButton = el("aw-sc-save");
+
+        if (saveButton) {
+            saveButton.addEventListener("click", function () {
+                Modal.save();
+            });
+        }
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", wire);
+    } else {
+        wire();
+    }
+
+    window.AW_SCRIPTCONFIG = Modal;
+})();
