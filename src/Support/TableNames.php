@@ -29,6 +29,13 @@ final class TableNames
     public const SEQUENCE_FLOWS = 'workflow_sequence_flows';
 
     /**
+     * جداول اجرای فرایند (معادل wf_cases، wf_inbox و wf_variables پکیج behin).
+     */
+    public const CASES = 'workflow_cases';
+    public const INBOX = 'workflow_inbox';
+    public const VARIABLES = 'workflow_variables';
+
+    /**
      * کلیدهای کانفیگ (workflow.storage.tables.*) و نام پیش‌فرض هر جدول.
      *
      * @var array<string, string>
@@ -42,6 +49,9 @@ final class TableNames
         'pools' => self::POOLS,
         'lanes' => self::LANES,
         'sequence_flows' => self::SEQUENCE_FLOWS,
+        'cases' => self::CASES,
+        'inbox' => self::INBOX,
+        'variables' => self::VARIABLES,
     ];
 
     public static function processes(): string
@@ -87,6 +97,21 @@ final class TableNames
     public static function sequenceFlows(): string
     {
         return self::element('sequence_flows');
+    }
+
+    public static function cases(): string
+    {
+        return self::element('cases');
+    }
+
+    public static function inbox(): string
+    {
+        return self::element('inbox');
+    }
+
+    public static function variables(): string
+    {
+        return self::element('variables');
     }
 
     /**

@@ -37,6 +37,7 @@ class Assets
                 self::local('js/i18n.js'),
                 self::local('js/taskconfig.js'),
                 self::local('js/scriptconfig.js'),
+                self::local('js/flowconfig.js'),
                 self::local('js/designer.js'),
             ]
         );

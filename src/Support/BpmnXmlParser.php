@@ -190,6 +190,28 @@ class BpmnXmlParser
         }
         return $ids;
     }
+
+    /**
+     * شناسه‌ی همه‌ی جریان‌های ترتیبی نمودار.
+     *
+     * @return array<int, string>
+     */
+    public static function sequenceFlowIds(string $xml): array
+    {
+        try {
+            $parsed = self::parse($xml);
+        } catch (InvalidArgumentException) {
+            return [];
+        }
+        $ids = [];
+        foreach ($parsed['sequence_flows'] as $flow) {
+            $id = (string) ($flow['element_id'] ?? '');
+            if ($id !== '') {
+                $ids[] = $id;
+            }
+        }
+        return $ids;
+    }
 private static function xpath(string $xml): DOMXPath
     {
         $dom = new DOMDocument('1.0', 'UTF-8');

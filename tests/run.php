@@ -122,6 +122,9 @@ check(
         'pools',
         'lanes',
         'sequence_flows',
+        'cases',
+        'inbox',
+        'variables',
     ]
 );
 check('ساخت خودکار جدول (PDO) حذف شده است', ! isset($config['storage']['auto_create']));

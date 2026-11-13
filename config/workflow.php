@@ -126,9 +126,21 @@ return [
             'pools' => 'workflow_pools',
             'lanes' => 'workflow_lanes',
             'sequence_flows' => 'workflow_sequence_flows',
+            'cases' => 'workflow_cases',
+            'inbox' => 'workflow_inbox',
+            'variables' => 'workflow_variables',
         ],
 
         // حداکثر حجم مجاز XML نمودار (بایت)
         'max_xml_bytes' => 2 * 1024 * 1024,
     ],
+
+    // ------------------------------------------------------------------
+    // موتور اجرای فرایند (Routing)
+    // ------------------------------------------------------------------
+    // مدل کاربر پروژه؛ برای یافتن کاربرانِ دارای یک نقش (role_id) استفاده می‌شود
+    'user_model' => \App\Models\User::class,
+
+    // مقدار اولیه شماره پرونده (کشیدن از این عدد شروع می‌شود)
+    'caseStartValue' => 1000,
 ];

@@ -6,6 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', $t('Arghavan Workflow'))</title>
     @yield('style')
 </head>
@@ -15,6 +16,7 @@
         <nav class="aw-nav">
             <a href="{{ route('workflow.index') }}">{{ $t('Diagram List') }}</a>
             <a href="{{ route('workflow.designer') }}">{{ $t('New Diagram') }}</a>
+            <a href="{{ route('workflow.start') }}">{{ $t('Start Process') }}</a>
         </nav>
     </div>
 

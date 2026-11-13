@@ -199,6 +199,36 @@
         </div>
     </div>
 
+    {{-- مودال تنظیمات جریان ترتیبی (انتخاب شرط بررسی‌شونده روی جریان‌های گیت‌وی) --}}
+    <div id="aw-flowconfig-modal" class="aw-modal" hidden>
+        <div class="aw-modal-box aw-scriptconfig-box">
+            <div class="aw-modal-header">
+                <strong id="aw-fl-title">{{ $t('Sequence Flow Configuration') }}</strong>
+                <button type="button" class="aw-btn small ghost" data-aw-fl-close>×</button>
+            </div>
+
+            <div class="aw-tc-body">
+                <div class="aw-form-grid">
+                    <div class="aw-form-group">
+                        <label for="aw-fl-name">{{ $t('Flow Name') }}</label>
+                        <input type="text" id="aw-fl-name" class="aw-input" dir="ltr">
+                    </div>
+                    <div class="aw-form-group full">
+                        <label for="aw-fl-condition">{{ $t('Condition') }}</label>
+                        <select id="aw-fl-condition" class="aw-select"></select>
+                        <small class="aw-muted">{{ $t('Conditions are loaded from the wf_conditions table (behin-simple-workflow); used on flows leaving an exclusive gateway.') }}</small>
+                    </div>
+                </div>
+                <div class="aw-muted aw-sc-hint">{!! str_replace(':table', '<code>workflow_sequence_flows</code>', e($t('Sequence flow settings are stored in the :table table (condition_id references wf_conditions).'))) !!}</div>
+            </div>
+
+            <div class="aw-modal-footer">
+                <button type="button" id="aw-fl-save" class="aw-btn">{{ $t('Save') }}</button>
+                <button type="button" class="aw-btn secondary" data-aw-fl-close>{{ $t('Close') }}</button>
+            </div>
+        </div>
+    </div>
+
     {{-- مودال ویرایش XML --}}
 <div id="aw-xml-modal" class="aw-modal" hidden>
     <div class="aw-modal-box">
@@ -234,6 +264,9 @@
         scriptConfigListUrl: @json(route('workflow.designer.script-config.list')),
         scriptConfigGetUrl: @json('/'.config('workflow.route_prefix', 'workflow').'/designer/script-config/{doc}/{element}'),
         scriptConfigSaveUrl: @json('/'.config('workflow.route_prefix', 'workflow').'/designer/script-config/{doc}/{element}'),
+        flowConfigListUrl: @json(route('workflow.designer.flow-config.list')),
+        flowConfigGetUrl: @json('/'.config('workflow.route_prefix', 'workflow').'/designer/flow-config/{doc}/{element}'),
+        flowConfigSaveUrl: @json('/'.config('workflow.route_prefix', 'workflow').'/designer/flow-config/{doc}/{element}'),
         i18n: @json((object) \ArghavanWorkflow\Support\Lang::fields())
     };
 </script>

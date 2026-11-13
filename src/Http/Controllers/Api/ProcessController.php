@@ -2,11 +2,13 @@
 
 namespace ArghavanWorkflow\Http\Controllers\Api;
 
+use ArghavanWorkflow\Runtime\ProcessEngine;
 use ArghavanWorkflow\Services\DiagramRepository;
 use ArghavanWorkflow\Support\BpmnXml;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * وب سرویس برای ایجاد و شروع فرآیندها (فرآیندهای BPMN ذخیره‌شده).
@@ -100,13 +102,14 @@ class ProcessController extends Controller
     }
 
     /**
-     * علامت‌گذاری فرآیند به‌عنوان آماده برای اجرا.
+     * استارت زدن فرایند: ساخت پرونده در workflow_cases و اجرای روتینگ از
+     * المان شروع فرایند تا رسیدن به اولین تسک کاربری یا المان پایان.
      *
-     * این پکیج خود فرآیند را اجرا نمی‌کند؛ فقط شناسه و مشخصات فرآیند
-     * ذخیره‌شده را برمی‌گرداند تا موتور اجرا در برنامه میزبان بتواند
-     * از آن برای آغاز اجرای BPMN استفاده کند.
+     * Body (اختیاری):
+     *   case_name:   string (نام پرونده)
+     *   case_number: int    (شماره پرونده؛ در صورت ارسال، شماره‌گذاری خودکار نادیده گرفته می‌شود)
      */
-    public function start(string $process): JsonResponse
+    public function start(Request $request, string $process): JsonResponse
     {
         $diagram = $this->diagrams->find($process);
 
@@ -117,12 +120,42 @@ class ProcessController extends Controller
             ], 404);
         }
 
+        $result = ProcessEngine::start(
+            $process,
+            Auth::id(),
+            $request->input('case_name'),
+            $request->input('case_number')
+        );
+
+        if ($result['ok'] === false) {
+            return response()->json([
+                'ok' => false,
+                'message' => $result['error'] ?? 'اجرای فرآیند انجام نشد.',
+            ], 400);
+        }
+
+        $case = $result['case'];
+
         return response()->json([
             'ok' => true,
-            'id' => $diagram['id'],
-            'name' => $diagram['name'],
-            'xml' => $diagram['xml'],
-            'message' => 'فرآیند برای اجرا آماده است.',
+            'case_id' => $case->id,
+            'case_number' => $case->number,
+            'status' => $case->status,
+            'stopped_at' => $result['stopped_at'] ?? null,
+            'message' => 'فرآیند استارت خورد و پرونده ساخته شد.',
+        ]);
+    }
+
+    /**
+     * نمایش صفحه شروع فرآیند (لیست فرآیندها برای اجرا).
+     */
+    public function startPage()
+    {
+        $layout = (string) config('workflow.layout', 'behin-layouts.app');
+        $layout = $layout !== '' && view()->exists($layout) ? $layout : 'workflow::layout';
+
+        return view('workflow::start', [
+            'layout' => $layout,
         ]);
     }
 }

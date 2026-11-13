@@ -395,7 +395,13 @@
             eventBus.on('element.dblclick', 1500, function (event) {
                 var element = event && event.element;
 
-                if (!element || (element.type !== 'bpmn:UserTask' && element.type !== 'bpmn:ScriptTask')) {
+                var supportedTypes = [
+                    'bpmn:UserTask',
+                    'bpmn:ScriptTask',
+                    'bpmn:SequenceFlow'
+                ];
+
+                if (!element || supportedTypes.indexOf(element.type) === -1) {
                     return;
                 }
 
@@ -404,8 +410,10 @@
                     event.stopPropagation();
                 }
 
-                // انتخاب مودال متناسب با نوع المان (تسک کاربری یا اسکریپت تسک)
-                var modalName = element.type === 'bpmn:ScriptTask' ? 'AW_SCRIPTCONFIG' : 'AW_TASKCONFIG';
+                // انتخاب مودال متناسب با نوع المان (تسک کاربری، اسکریپت تسک یا جریان ترتیبی)
+                var modalName = element.type === 'bpmn:ScriptTask'
+                    ? 'AW_SCRIPTCONFIG'
+                    : (element.type === 'bpmn:SequenceFlow' ? 'AW_FLOWCONFIG' : 'AW_TASKCONFIG');
                 var Modal = window[modalName];
 
                 if (!Modal || typeof Modal.open !== 'function') {
