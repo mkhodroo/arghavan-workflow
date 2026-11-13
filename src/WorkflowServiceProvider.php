@@ -10,7 +10,7 @@ class WorkflowServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/workflow.php', 'workflow');
+        $this->mergeConfigFrom(__DIR__.'/../config/workflow2.php', 'workflow2');
 
         // مخزن نمودارها؛ جدول‌ها با migrationهای همین پکیج ساخته می‌شوند
         // (php artisan migrate) و ذخیره‌سازی با Eloquent انجام می‌شود.

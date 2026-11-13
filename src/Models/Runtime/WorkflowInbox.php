@@ -28,7 +28,7 @@ class WorkflowInbox extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $table = 'wf_inbox';
+    protected $table = 'workflow_inbox';
 
     protected $fillable = [
         'task_id',

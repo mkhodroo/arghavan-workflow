@@ -14,7 +14,7 @@
 <div class="aw-card">
     <div class="aw-card-header">
         <h2>{{ $t('Diagram List') }}</h2>
-        <a class="aw-btn" href="{{ route('workflow.designer') }}">＋ {{ $t('New Diagram') }}</a>
+        <a class="aw-btn" href="{{ route('workflow2.designer') }}">＋ {{ $t('New Diagram') }}</a>
     </div>
 
     @if (! $storageEnabled)
@@ -38,9 +38,9 @@
                         <td>{{ $diagram['name'] }}</td>
                         <td>{{ $diagram['updated_at'] }}</td>
                         <td class="aw-actions">
-                            <a class="aw-btn small" href="{{ route('workflow.designer', $diagram['id']) }}">{{ $t('Edit') }}</a>
+                            <a class="aw-btn small" href="{{ route('workflow2.designer', $diagram['id']) }}">{{ $t('Edit') }}</a>
 
-                            <form method="POST" action="{{ route('workflow.destroy', $diagram['id']) }}"
+                            <form method="POST" action="{{ route('workflow2.destroy', $diagram['id']) }}"
                                   onsubmit="return confirm({{ \Illuminate\Support\Js::from($t('Delete this diagram permanently?')) }});">
                                 @csrf
                                 @method('DELETE')

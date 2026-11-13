@@ -3,7 +3,8 @@
 return [
 
     // پیشوند مسیرهای پنل طراحی (مثلا /workflow و /workflow/designer)
-    'route_prefix' => 'workflow',
+    'route_prefix' => 'workflow2',
+    'api_route_prefix' => 'workflow2/api',
 
     // میدلورهای مسیرها؛ behin-layouts به کاربر واردشده نیاز دارد.
     'middleware' => ['web', 'auth'],

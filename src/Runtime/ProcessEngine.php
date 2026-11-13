@@ -206,15 +206,87 @@ class ProcessEngine
             return ['ok' => false, 'error' => 'Element has no outgoing flow: ' . $elementId];
         }
 
+        $last = ['ok' => true, 'stopped_at' => null];
+
         foreach ($targets as $target) {
             $result = self::runElement($processId, $target, $case, $visited);
 
             if ($result['ok'] === false) {
                 return $result;
             }
+
+            $last = $result;
         }
 
-        return ['ok' => true, 'stopped_at' => $targets[0]];
+        return $last;
+    }
+
+    /**
+     * ادامه‌ی روتینگ بعد از اتمام یک کار کارتابل.
+     *
+     * رکورد کارتابل «done» می‌شود و جریان از خروجی همان تسک کاربری جلو می‌رود
+     * (خودِ تسک دوباره اجرا نمی‌شود). در صورت خطا کل تراکنش برمی‌گردد.
+     *
+     * @return array{
+     *     ok: bool,
+     *     case?: WorkflowCase,
+     *     stopped_at?: string|null,
+     *     error?: string
+     * }
+     */
+    public static function next(WorkflowInbox $inbox, $doneBy = null): array
+    {
+        $inbox->loadMissing(['task', 'case']);
+
+        $task = $inbox->task;
+        $case = $inbox->case;
+
+        if (! $task instanceof UserTask || $case === null) {
+            return ['ok' => false, 'error' => 'Task or case not found.'];
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $now = now();
+
+            $inbox->update([
+                'status' => 'done',
+                'done_by' => $doneBy,
+                'done_at' => $now,
+            ]);
+
+            WorkflowInbox::query()
+                ->where('task_id', $task->id)
+                ->where('case_id', $case->id)
+                ->where('id', '!=', $inbox->id)
+                ->whereIn('status', ['new', 'opened', 'inProgress', 'draft'])
+                ->update([
+                    'status' => 'done',
+                    'done_at' => $now,
+                ]);
+
+            $visited = [(string) $task->process_id . '|' . (string) $task->element_id];
+            $result = self::continue((string) $task->process_id, (string) $task->element_id, $case, $visited);
+
+            if ($result['ok'] === false) {
+                DB::rollBack();
+
+                return $result;
+            }
+
+            DB::commit();
+
+            return [
+                'ok' => true,
+                'case' => $case->refresh(),
+                'stopped_at' => $result['stopped_at'] ?? null,
+            ];
+        } catch (Throwable $e) {
+            DB::rollBack();
+
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
     }
 
     /**

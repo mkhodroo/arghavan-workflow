@@ -250,23 +250,23 @@
 @section('script')
 <script>
     window.AW_CONFIG = {
-        palette: @json(config('workflow.palette', [])),
+        palette: @json(config('workflow2.palette', [])),
         initialXml: @json($diagram['xml'] ?? null),
         docId: @json($diagram['id'] ?? null),
         storageEnabled: @json((bool) $storageEnabled),
-        saveUrl: @json(route('workflow.save')),
-        newUrl: @json(route('workflow.designer')),
-        indexUrl: @json(route('workflow.index')),
+        saveUrl: @json(route('workflow2.save')),
+        newUrl: @json(route('workflow2.designer')),
+        indexUrl: @json(route('workflow2.index')),
         csrf: @json(csrf_token()),
-        configListUrl: @json(route('workflow.designer.element-config.list')),
-        configGetUrl: @json('/'.config('workflow.route_prefix', 'workflow').'/designer/element-config/{doc}/{element}'),
-        configSaveUrl: @json('/'.config('workflow.route_prefix', 'workflow').'/designer/element-config/{doc}/{element}'),
-        scriptConfigListUrl: @json(route('workflow.designer.script-config.list')),
-        scriptConfigGetUrl: @json('/'.config('workflow.route_prefix', 'workflow').'/designer/script-config/{doc}/{element}'),
-        scriptConfigSaveUrl: @json('/'.config('workflow.route_prefix', 'workflow').'/designer/script-config/{doc}/{element}'),
-        flowConfigListUrl: @json(route('workflow.designer.flow-config.list')),
-        flowConfigGetUrl: @json('/'.config('workflow.route_prefix', 'workflow').'/designer/flow-config/{doc}/{element}'),
-        flowConfigSaveUrl: @json('/'.config('workflow.route_prefix', 'workflow').'/designer/flow-config/{doc}/{element}'),
+        configListUrl: @json(route('workflow2.designer.element-config.list')),
+        configGetUrl: @json('/'.config('workflow2.route_prefix', 'workflow').'/designer/element-config/{doc}/{element}'),
+        configSaveUrl: @json('/'.config('workflow2.route_prefix', 'workflow').'/designer/element-config/{doc}/{element}'),
+        scriptConfigListUrl: @json(route('workflow2.designer.script-config.list')),
+        scriptConfigGetUrl: @json('/'.config('workflow2.route_prefix', 'workflow').'/designer/script-config/{doc}/{element}'),
+        scriptConfigSaveUrl: @json('/'.config('workflow2.route_prefix', 'workflow').'/designer/script-config/{doc}/{element}'),
+        flowConfigListUrl: @json(route('workflow2.designer.flow-config.list')),
+        flowConfigGetUrl: @json('/'.config('workflow2.route_prefix', 'workflow').'/designer/flow-config/{doc}/{element}'),
+        flowConfigSaveUrl: @json('/'.config('workflow2.route_prefix', 'workflow').'/designer/flow-config/{doc}/{element}'),
         i18n: @json((object) \ArghavanWorkflow\Support\Lang::fields())
     };
 </script>

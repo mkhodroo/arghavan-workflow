@@ -56,9 +56,9 @@ class Assets
      */
     public static function local(string $path): string
     {
-        $version = (string) config('workflow.version', '1.0.0');
+        $version = (string) config('workflow2.version', '1.0.0');
 
-        return route('workflow.assets', ['path' => $path]).'?v='.rawurlencode($version);
+        return route('workflow2.assets', ['path' => $path]).'?v='.rawurlencode($version);
     }
 
     /**
@@ -67,8 +67,8 @@ class Assets
      */
     private static function bpmn(array $paths): array
     {
-        if (config('workflow.assets.mode', 'local') === 'cdn') {
-            $base = rtrim((string) config('workflow.assets.cdn_base', ''), '/');
+        if (config('workflow2.assets.mode', 'local') === 'cdn') {
+            $base = rtrim((string) config('workflow2.assets.cdn_base', ''), '/');
 
             return array_map(fn (string $path) => $base.'/'.$path, $paths);
         }

@@ -36,7 +36,7 @@ class WorkflowCase extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $table = 'wf_cases';
+    protected $table = 'workflow_cases';
 
     protected $fillable = [
         'process_id',

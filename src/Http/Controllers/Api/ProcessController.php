@@ -77,7 +77,7 @@ class ProcessController extends Controller
             'ok' => true,
             'id' => $diagram['id'],
             'name' => $diagram['name'],
-            'route' => route('workflow.designer', $diagram['id']),
+            'route' => route('workflow2.designer', $diagram['id']),
         ], 201);
     }
 

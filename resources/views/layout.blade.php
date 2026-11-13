@@ -12,11 +12,12 @@
 </head>
 <body>
     <div class="aw-header">
-        <a class="aw-brand" href="{{ route('workflow.index') }}">🌸 {{ $t('Arghavan Workflow') }}</a>
+        <a class="aw-brand" href="{{ route('workflow2.index') }}">🌸 {{ $t('Arghavan Workflow') }}</a>
         <nav class="aw-nav">
-            <a href="{{ route('workflow.index') }}">{{ $t('Diagram List') }}</a>
-            <a href="{{ route('workflow.designer') }}">{{ $t('New Diagram') }}</a>
-            <a href="{{ route('workflow.start') }}">{{ $t('Start Process') }}</a>
+            <a href="{{ route('workflow2.index') }}">{{ $t('Diagram List') }}</a>
+            <a href="{{ route('workflow2.designer') }}">{{ $t('New Diagram') }}</a>
+            <a href="{{ route('workflow2.start') }}">{{ $t('Start Process') }}</a>
+            <a href="{{ route('workflow2.inbox') }}">{{ $t('Inbox') }}</a>
         </nav>
     </div>
 

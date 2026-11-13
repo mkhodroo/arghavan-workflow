@@ -1,4 +1,4 @@
-@extends($layout)
+@extends('behin-layouts.app')
 
 @php
     $t = fn (string $key): string => \ArghavanWorkflow\Support\Lang::field($key);
@@ -78,7 +78,7 @@
 <div class="aw-card">
     <div class="aw-card-header">
         <h2>{{ $t('Start Process') }}</h2>
-        <a class="aw-btn" href="{{ route('workflow.index') }}">{{ $t('Back to Diagrams') }}</a>
+        <a class="aw-btn" href="{{ route('workflow2.index') }}">{{ $t('Back to Diagrams') }}</a>
     </div>
 
     <div id="loading" class="aw-muted">{{ $t('Loading processes...') }}</div>
@@ -121,8 +121,9 @@
         </form>
     </div>
 </div>
+@endsection
 
-@yield('script')
+@section('script')
 <script>
     let currentProcessId = null;
     let csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -134,7 +135,7 @@
         const tbody = document.getElementById('processes-table-body');
 
         try {
-            const response = await fetch('{{ route('workflow.api.processes.index') }}', {
+            const response = await fetch('{{ route('workflow2.api.processes.index') }}', {
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
@@ -199,7 +200,7 @@
         btn.textContent = '{{ $t('Starting...') }}';
 
         try {
-            const response = await fetch(`{{ route('workflow.api.processes.start', ['process' => 'ID_PLACEHOLDER']) }}`.replace('ID_PLACEHOLDER', currentProcessId), {
+            const response = await fetch(`{{ route('workflow2.api.processes.start', ['process' => 'ID_PLACEHOLDER']) }}`.replace('ID_PLACEHOLDER', currentProcessId), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -258,3 +259,4 @@
 
     loadProcesses();
 </script>
+@endsection

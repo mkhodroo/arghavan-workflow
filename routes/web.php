@@ -1,6 +1,7 @@
 <?php
 
 use ArghavanWorkflow\Http\Controllers\AssetController;
+use ArghavanWorkflow\Http\Controllers\Api\InboxController;
 use ArghavanWorkflow\Http\Controllers\Api\ProcessController;
 use ArghavanWorkflow\Http\Controllers\DesignerController;
 use ArghavanWorkflow\Http\Controllers\DesignerFlowConfigController;
@@ -9,15 +10,18 @@ use ArghavanWorkflow\Http\Controllers\DesignerTaskConfigController;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
-    'prefix' => config('workflow.route_prefix', 'workflow'),
-    'middleware' => config('workflow.middleware', ['web']),
-    'as' => 'workflow.',
+    'prefix' => config('workflow2.route_prefix', 'workflow2'),
+    'middleware' => config('workflow2.middleware', ['web']),
+    'as' => 'workflow2.',
 ], function () {
     // فهرست نمودارهای ذخیره‌شده
     Route::get('/', [DesignerController::class, 'index'])->name('index');
 
     // صفحه شروع فرآیندها (لیست فرآیندهایی که کاربر می‌تواند اجرا کند)
     Route::get('/start', [ProcessController::class, 'startPage'])->name('start');
+
+    // صفحه کارتابل کاربر
+    Route::get('/inbox', [InboxController::class, 'inboxPage'])->name('inbox');
 
     // پیکربندی تسک (تنظیمات UserTask) درون نمودار
     // نکته: این روت‌ها باید پیش از روت wildcard «/designer/{doc?}» ثبت شوند،

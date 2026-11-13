@@ -100,7 +100,7 @@ class DesignerController extends Controller
             'ok' => true,
             'id' => $diagram['id'],
             'name' => $diagram['name'],
-            'route' => route('workflow.designer', $diagram['id']),
+            'route' => route('workflow2.designer', $diagram['id']),
         ]);
     }
 
@@ -114,7 +114,7 @@ class DesignerController extends Controller
         }
 
         return redirect()
-            ->route('workflow.index')
+            ->route('workflow2.index')
             ->with('success', Lang::field('Diagram deleted.'));
     }
 
