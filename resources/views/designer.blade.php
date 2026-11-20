@@ -218,8 +218,13 @@
                         <select id="aw-fl-condition" class="aw-select"></select>
                         <small class="aw-muted">{{ $t('Conditions are loaded from the wf_conditions table (behin-simple-workflow); used on flows leaving an exclusive gateway.') }}</small>
                     </div>
+                    <div class="aw-form-group full">
+                        <label for="aw-fl-script">{{ $t('Script') }}</label>
+                        <select id="aw-fl-script" class="aw-select"></select>
+                        <small class="aw-muted">{{ $t('Scripts are loaded from the wf_scripts table (behin-simple-workflow); on gateway flows, true takes this path, false skips it; on normal flows the script runs as a side effect.') }}</small>
+                    </div>
                 </div>
-                <div class="aw-muted aw-sc-hint">{!! str_replace(':table', '<code>workflow_sequence_flows</code>', e($t('Sequence flow settings are stored in the :table table (condition_id references wf_conditions).'))) !!}</div>
+                <div class="aw-muted aw-sc-hint">{!! str_replace(':table', '<code>workflow_sequence_flows</code>', e($t('Sequence flow settings are stored in the :table table (condition_id and script_id reference wf_conditions and wf_scripts).'))) !!}</div>
             </div>
 
             <div class="aw-modal-footer">

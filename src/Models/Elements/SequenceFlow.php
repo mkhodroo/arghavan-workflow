@@ -13,6 +13,7 @@ use ArghavanWorkflow\Support\TableNames;
  * @property string|null $target_ref
  * @property string|null $condition_expression
  * @property bool $is_default
+ * @property string|null $script_id
  */
 class SequenceFlow extends BpmnElement
 {
@@ -28,6 +29,7 @@ class SequenceFlow extends BpmnElement
             'target_ref',
             'condition_expression',
             'is_default',
+            'script_id',
         ]);
     }
 

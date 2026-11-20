@@ -21,14 +21,7 @@ class DesignerFlowConfigController extends BaseController
     /**
      * لیست داده‌های کمکی برای مودال تنظیمات جریان: شرط‌های wf_conditions.
      */
-    public function list(): JsonResponse
-    {
-        return response()->json([
-            'ok' => true,
-            'conditions' => $this->config->getConditionsList(),
-        ]);
-    }
-
+    /**     * لیست داده‌های کمکی برای مودال تنظیمات جریان: شرط‌های wf_conditions و اسکریپت‌های wf_scripts.     */    public function list(): JsonResponse    {        return response()->json([            'ok' => true,            'conditions' => $this->config->getConditionsList(),            'scripts' => $this->config->getScriptsList(),        ]);    }
     public function get(Request $request, string $doc, string $element): JsonResponse
     {
         if (! $this->storageEnabled()) {

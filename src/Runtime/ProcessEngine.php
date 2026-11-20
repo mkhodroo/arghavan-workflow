@@ -8,6 +8,7 @@ use ArghavanWorkflow\Models\Elements\ScriptTask;
 use ArghavanWorkflow\Models\Elements\SequenceFlow;
 use ArghavanWorkflow\Models\Elements\StartEvent;
 use ArghavanWorkflow\Models\Elements\UserTask;
+use ArghavanWorkflow\Runtime\ScriptRunner;
 use ArghavanWorkflow\Models\Runtime\WorkflowCase;
 use ArghavanWorkflow\Models\Runtime\WorkflowInbox;
 use ArghavanWorkflow\Models\WorkflowProcess;
@@ -83,7 +84,6 @@ class ProcessEngine
 
             $visited = [];
             $result = self::runElement($processId, (string) $startEvent->element_id, $case, $visited);
-
             if ($result['ok'] === false) {
                 DB::rollBack();
 
@@ -196,6 +196,10 @@ class ProcessEngine
     /**
      * ادامه‌ی جریان از طریق جریان(های) خروجی المان فعلی.
      *
+     * برای جریان‌های عادی (نه خروجی گیت‌وی شرطی)، اسکریپت‌های ثبت‌شده روی
+     * هر sequence flow به صورت « Side Effect » اجرا می‌شوند و خروجی آن‌ها
+     * (true/false) روی مسیر تأثیر نمی‌گذارد؛ فقط در صورت خطا جریان متوقف می‌شود.
+     *
      * @param  array<int, string>  $visited
      * @return array{ok: bool, stopped_at?: string|null, error?: string}
      */
@@ -210,6 +214,17 @@ class ProcessEngine
         $last = ['ok' => true, 'stopped_at' => null];
 
         foreach ($targets as $target) {
+            // اسکریپت ثبت‌شده روی این جریان ترتیبی (برای جریان‌های عادی)
+            $flow = self::findFlow($processId, $elementId, $target);
+
+            if ($flow !== null && ! empty($flow->script_id)) {
+                $scriptResult = ScriptRunner::run($flow->script_id, $case);
+
+                if ($scriptResult['ok'] === false) {
+                    return ['ok' => false, 'error' => $scriptResult['error']];
+                }
+            }
+
             $result = self::runElement($processId, $target, $case, $visited);
 
             if ($result['ok'] === false) {
@@ -220,6 +235,20 @@ class ProcessEngine
         }
 
         return $last;
+    }
+
+    /**
+     * پیدا کردن یک جریان ترتیبی خاص بین دو گره.
+     *
+     * @return SequenceFlow|null
+     */
+    private static function findFlow(string $processId, string $sourceRef, string $targetRef): ?SequenceFlow
+    {
+        return SequenceFlow::query()
+            ->forProcess($processId)
+            ->where('source_ref', $sourceRef)
+            ->where('target_ref', $targetRef)
+            ->first();
     }
 
     /**
@@ -334,16 +363,37 @@ class ProcessEngine
                 continue;
             }
 
-            $result = ConditionEvaluator::evaluate($flow->condition_id, $case);
+            // ۱) اگر روی این خروجی اسکریپتی تعریف شده باشد، آن را اجرا کنیم.
+            //    اگر خروجی اسکریپت true بود، همین مسیر را می‌گیریم؛ در غیر این صورت مسیر بعدی را بررسی می‌کنیم.
+            if (! empty($flow->script_id)) {
+                $scriptResult = ScriptRunner::run($flow->script_id, $case);
 
-            if ($result['ok'] === false) {
-                // جریان بدون شرط معتبر نیست؛ خطا برمی‌گردد تا مشکل پیکربندی دیده شود
-                throw new \RuntimeException($result['error']);
+                if ($scriptResult['ok'] === true && $scriptResult['output']) {
+                    return (string) $flow->target_ref;
+                }
+
+                // اسکریپت false برگردانده یا خطا داده؛ مسیر بعدی را بررسی می‌کنیم.
+                continue;
             }
 
-            if ($result['result'] === true) {
-                return (string) $flow->target_ref;
+            // ۲) اگرcondition_id تعریف شده باشد، شرط را ارزیابی می‌کنیم (رفتار قبلی).
+            if (! empty($flow->condition_id)) {
+                $result = ConditionEvaluator::evaluate($flow->condition_id, $case);
+
+                if ($result['ok'] === false) {
+                    // جریان بدون شرط معتبر نیست؛ خطا برمی‌گردد تا مشکل پیکربندی دیده شود
+                    throw new \RuntimeException($result['error']);
+                }
+
+                if ($result['result'] === true) {
+                    return (string) $flow->target_ref;
+                }
+
+                continue;
             }
+
+            // ۳) outflow بدون script و بدون condition: مسیر implicit است، همین را می‌گیریم.
+            return (string) $flow->target_ref;
         }
 
         return $defaultTarget !== null ? (string) $defaultTarget : null;

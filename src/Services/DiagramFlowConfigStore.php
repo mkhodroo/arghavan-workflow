@@ -6,6 +6,7 @@ use ArghavanWorkflow\Models\Elements\SequenceFlow;
 use ArghavanWorkflow\Models\WorkflowProcess;
 use ArghavanWorkflow\Support\BpmnXmlParser;
 use ArghavanWorkflow\Support\Lang;
+use Behin\SimpleWorkflow\Models\Core\Script;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -13,8 +14,9 @@ use InvalidArgumentException;
  * ذخیره و خواندن تنظیمات «جریان ترتیبی» (Sequence Flow).
  *
  * جریان‌های خروجی از گیت‌وی شرطی باید مشخص کنند کدام شرط (از جدول
- * wf_conditions پکیج behin-simple-workflow) بررسی شود؛ شناسه‌ی شرط در ستون
- * condition_id جدول workflow_sequence_flows ذخیره می‌شود.
+ * wf_conditions پکیج behin-simple-workflow) بررسی شود و/یا کدام اسکریپت
+ * (از جدول wf_scripts) اجرا شود. شناسه‌ی شرط در ستون condition_id و
+ * شناسه‌ی اسکریپت در ستون script_id جدول workflow_sequence_flows ذخیره می‌شود.
  */
 class DiagramFlowConfigStore
 {
@@ -26,6 +28,7 @@ class DiagramFlowConfigStore
     public const FIELDS = [
         'name',
         'condition_id',
+        'script_id',
     ];
 
     /**
@@ -36,6 +39,7 @@ class DiagramFlowConfigStore
     public const COLUMNS = [
         'name' => 'name',
         'condition_id' => 'condition_id',
+        'script_id' => 'script_id',
     ];
 
     public function __construct(private readonly DiagramRepository $diagrams)
@@ -58,6 +62,19 @@ class DiagramFlowConfigStore
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * لیست اسکریپت‌های موجود (wf_scripts) برای انتخاب در مودال جریان.
+     *
+     * @return array<int, array{id: string, name: string, executive_file: string|null, content: string|null}>
+     */
+    public function getScriptsList(): array
+    {
+        return Script::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'executive_file', 'content'])
+            ->toArray();
     }
 
     /**
