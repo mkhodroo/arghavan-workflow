@@ -10,9 +10,21 @@
     function fillSelect(id, options, value, placeholder) {
         var select = el(id); if (!select) { return; }
         select.innerHTML = "";
-        var first = document.createElement("option"); first.value = ""; first.textContent = placeholder || t("--- Select ---"); select.appendChild(first);
-        (options || []).forEach(function (option) { var item = document.createElement("option"); item.value = option.id; item.textContent = option.name || option.id; select.appendChild(item); });
-        select.value = value === null || value === undefined ? "" : String(value);
+        // Add all options first (without a placeholder at the start)
+        (options || []).forEach(function (option) { 
+            var item = document.createElement("option"); 
+            item.value = option.id; 
+            item.textContent = option.name || option.id; 
+            select.appendChild(item); 
+        });
+        // If value is provided and not empty, select the matching option
+        if (value !== null && value !== undefined && value !== "") {
+            select.value = String(value);
+        }
+        // If value is empty/none, add placeholder option at the end
+        if (value === null || value === undefined || value === "") {
+            var first = document.createElement("option"); first.value = ""; first.textContent = placeholder || t("--- Select ---"); select.appendChild(first);
+        }
     }
 
     var Modal = {
