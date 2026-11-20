@@ -164,26 +164,7 @@
 
     async function viewDetail(inboxId) {
         try {
-            const response = await fetch(`{{ route('workflow2.api.inbox.show', ['inbox' => 'ID_PLACEHOLDER']) }}`.replace('ID_PLACEHOLDER', inboxId), {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            const data = await response.json();
-
-            if (data.ok) {
-                const r = data.row;
-                alert(
-                    `{{ $t('Task') }}: ${r.task_name}\n` +
-                    `{{ $t('Case') }}: ${r.case_name}\n` +
-                    `{{ $t('Case Number') }}: ${r.case_number}\n` +
-                    `{{ $t('Status') }}: ${r.status}\n` +
-                    `{{ $t('Created At') }}: ${r.created_at}`
-                );
-            } else {
-                showError(data.message || '{{ $t('Failed to load detail.') }}');
-            }
+            window.location.href = `{{ route('workflow2.api.inbox.formPage', ['inbox' => 'ID_PLACEHOLDER']) }}`.replace('ID_PLACEHOLDER', inboxId);
         } catch (e) {
             showError('{{ $t('Error loading detail.') }}');
         }

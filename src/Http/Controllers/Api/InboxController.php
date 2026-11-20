@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 /**
  * وب سرویس کارتابل کاربر.
@@ -186,6 +187,41 @@ class InboxController extends Controller
 
         return view('workflow::inbox', [
             'layout' => $layout,
+        ]);
+    }
+
+    /**
+     * نمایش صفحه فرم یک کارتابل.
+     *
+     * فرم متناسب با task->form_id از جدول wf_forms لود و با field-generator نمایش داده می‌شود.
+     * شامل دکمه «مرحله بعد» که ابتدا next را چک می‌کند و اگر خطا نداشت، فرآیند را به مرحله بعد می‌برد.
+     */
+    public function formPage(string $inboxId)
+    {
+        $inbox = WorkflowInbox::with(['task', 'case'])->find($inboxId);
+
+        if (! $inbox) {
+            abort(404, 'رکورد کارتابل یافت نشد.');
+        }
+
+        if ($inbox->actor != Auth::id()) {
+            abort(403, 'شما دسترسی به این کارتابل ندارید.');
+        }
+
+        // چک کردن وجود فرم برای تسک
+        $form = null;
+        if ($inbox->task && $inbox->task->form_id) {
+            $form = \Behin\SimpleWorkflow\Models\Core\Form::find($inbox->task->form_id);
+        }
+
+        $layout = (string) config('workflow2.layout', 'behin-layouts.app');
+        $layout = $layout !== '' && view()->exists($layout) ? $layout : 'workflow::layout';
+
+        return view('workflow::task-form', [
+            'layout' => $layout,
+            'inbox' => $inbox,
+            'form' => $form,
+            'csrf_token' => csrf_token(),
         ]);
     }
 

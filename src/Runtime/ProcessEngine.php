@@ -12,6 +12,8 @@ use ArghavanWorkflow\Models\Runtime\WorkflowCase;
 use ArghavanWorkflow\Models\Runtime\WorkflowInbox;
 use ArghavanWorkflow\Models\WorkflowProcess;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 use Throwable;
 
 /**
@@ -157,7 +159,6 @@ class ProcessEngine
         // ------------------------------------------------------------------
         if ($element instanceof ScriptTask) {
             $result = ScriptRunner::run($element->script_id, $case);
-
             if ($result['ok'] === false) {
                 return ['ok' => false, 'error' => $result['error']];
             }
@@ -268,12 +269,16 @@ class ProcessEngine
 
             $visited = [(string) $task->process_id . '|' . (string) $task->element_id];
             $result = self::continue((string) $task->process_id, (string) $task->element_id, $case, $visited);
+            
+            Log::info($result);
 
             if ($result['ok'] === false) {
                 DB::rollBack();
 
                 return $result;
             }
+
+            
 
             DB::commit();
 

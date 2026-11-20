@@ -27,4 +27,7 @@ Route::group([
     Route::post('/inbox/{inbox}/done', [InboxController::class, 'done'])->name('inbox.done');
     Route::post('/inbox/{inbox}/next', [InboxController::class, 'next'])->name('inbox.next');
     Route::post('/inbox/{inbox}/complete', [InboxController::class, 'complete'])->name('inbox.complete');
+
+    // Task form page (for editing/creating tasks in inbox)
+    Route::get('/inbox/{inbox}/form', [InboxController::class, 'formPage'])->name('inbox.formPage');
 });
