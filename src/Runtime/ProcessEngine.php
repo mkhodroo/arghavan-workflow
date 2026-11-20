@@ -251,6 +251,20 @@ class ProcessEngine
         try {
             $now = now();
 
+            // ابتدا روتینگ به المان بعدی انجام شود؛ اگر اسکریپت خطا دهد،
+            // هرچیز rollback می‌شود و اینباکس هرگز به done تغییر نمی‌یابد.
+            $visited = [(string) $task->process_id . '|' . (string) $task->element_id];
+            $result = self::continue((string) $task->process_id, (string) $task->element_id, $case, $visited);
+            
+            Log::info($result);
+
+            if ($result['ok'] === false) {
+                DB::rollBack();
+
+                return $result;
+            }
+
+            // روتینگ موفقیت‌آمیز بود؛ حالا اینباکس و هم‌سرهایش را done می‌کنیم.
             $inbox->update([
                 'status' => 'done',
                 'done_by' => $doneBy,
@@ -266,19 +280,6 @@ class ProcessEngine
                     'status' => 'done',
                     'done_at' => $now,
                 ]);
-
-            $visited = [(string) $task->process_id . '|' . (string) $task->element_id];
-            $result = self::continue((string) $task->process_id, (string) $task->element_id, $case, $visited);
-            
-            Log::info($result);
-
-            if ($result['ok'] === false) {
-                DB::rollBack();
-
-                return $result;
-            }
-
-            
 
             DB::commit();
 
